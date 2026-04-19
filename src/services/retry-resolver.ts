@@ -1,4 +1,5 @@
 import type { OrchestratorError } from "../errors/base";
+import type { RetryPolicy } from "../types/policies";
 
 export {
 	DEFAULT_BACKOFF_BASE_MS,
@@ -6,11 +7,7 @@ export {
 	DEFAULT_MAX_BACKOFF_MS,
 } from "../constants";
 
-export interface RetryPolicy {
-	readonly maxAttempts: number;
-	readonly backoffBaseMs: number;
-	readonly maxBackoffMs: number;
-}
+export type { RetryPolicy };
 
 export type RetryDecisionReason =
 	| "transient_timeout"
