@@ -1,0 +1,55 @@
+import type { DelegationRequest } from "../types/delegation";
+
+export { MANIFEST_VERSION } from "../constants";
+
+export interface DelegationContext {
+	readonly runId: string;
+	readonly orchestratorName: string;
+	readonly phase: string;
+	readonly resumeAt: string;
+	readonly attempt: number;
+	readonly maxAttempts: number;
+	readonly emittedAt: string;
+	readonly emittedAtEpochMs: number;
+	readonly timeoutMs: number;
+	readonly deadlineAtEpochMs: number;
+	readonly runDir: string;
+}
+
+export interface DelegationManifestJob {
+	readonly id: string;
+	readonly prompt: string;
+	readonly resultPath: string;
+}
+
+export interface DelegationManifest {
+	readonly manifestVersion: 1;
+	readonly runId: string;
+	readonly orchestratorName: string;
+	readonly phase: string;
+	readonly resumeAt: string;
+	readonly label: string;
+	readonly kind: "skill" | "agent" | "agent-batch";
+	readonly emittedAt: string;
+	readonly emittedAtEpochMs: number;
+	readonly timeoutMs: number;
+	readonly deadlineAtEpochMs: number;
+	readonly attempt: number;
+	readonly maxAttempts: number;
+	readonly skill?: string;
+	readonly skillArgs?: Record<string, unknown>;
+	readonly agentType?: string;
+	readonly prompt?: string;
+	readonly jobs?: readonly DelegationManifestJob[];
+	readonly resultPath?: string;
+}
+
+export interface DelegationBinding<Req extends DelegationRequest> {
+	readonly kind: Req["kind"];
+	buildManifest(request: Req, context: DelegationContext): DelegationManifest;
+	buildProtocolBlock(
+		manifest: DelegationManifest,
+		manifestPath: string,
+		resumeCmd: string,
+	): string;
+}
