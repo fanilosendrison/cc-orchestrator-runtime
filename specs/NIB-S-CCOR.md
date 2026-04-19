@@ -1098,15 +1098,15 @@ Tout le reste est écrit maison ou utilise l'API standard Node ≥ 22 natif :
 - `AbortSignal.timeout`, `AbortController` natifs
 - `performance.now()` natif
 - `process.stderr.write()` + `fs.appendFileSync` pour logger
-- Pas de framework de tests runtime : tests via `vitest` (dev-only)
+- Pas de framework de tests runtime : tests via `bun:test` (dev-only, intégré au runtime Bun)
 
 **Règle normative** : ajouter une dépendance runtime = modification du NX + justification écrite.
 
 ### 10.5 Manager de packages et runtime Node
 
-- **Package manager** : `pnpm >= 10`
-- **Node runtime** : `>= 22 LTS`
-- **Bun comme runtime de consommation** : les consommateurs (orchestrateurs dans `~/.claude/scripts/`) peuvent exécuter le package via `bun run`. Le runtime ne dépend d'aucune API exclusive à Node ou Bun.
+- **Package manager** : `bun >= 1.2` (lockfile texte `bun.lock`)
+- **Runtime de développement** : `bun >= 1.3` (API-compat Node ≥ 22 requise par §5.7)
+- **Node runtime ciblé par `engines`** : `>= 22 LTS` — garantit la compatibilité des consommateurs externes installés via npm/pnpm/yarn. Le runtime ne dépend d'aucune API exclusive à Node ou Bun.
 
 ---
 

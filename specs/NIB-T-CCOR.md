@@ -1711,7 +1711,7 @@ Les **property tests P-OB-a/b/c** (§23.3) qui vérifient ces invariants sur des
 
 ### 27.bis.9 Règle de consommation
 
-Ces tests sont **obligatoires** au moment où Layer 1 PUBLIC-API est implémenté (premier palier GREEN). Un consommateur Layer 2/3/4 ne doit pas construire au-dessus d'une surface non verrouillée par ces companions. En pratique : la CI a un run séparé `pnpm test:green-l1` qui passe dès que Layer 1 compile.
+Ces tests sont **obligatoires** au moment où Layer 1 PUBLIC-API est implémenté (premier palier GREEN). Un consommateur Layer 2/3/4 ne doit pas construire au-dessus d'une surface non verrouillée par ces companions. En pratique : la CI a un run séparé `bun test tests/green-l1` qui passe dès que Layer 1 compile.
 
 ---
 
@@ -1933,7 +1933,7 @@ Cibles alignées sur §19.2 du NX. Les décisions matérialisées (retry, deadli
 
 ### 29.3 Pas de test à la vraie session Claude Code
 
-Aucun test ne nécessite une session Claude Code live. Tous les tests reposent sur `mock-fs` + `mock-clock` + `mock-stdio` + `mock-logger`. Critère de succès : `pnpm test` passe **offline** et sans aucun tool Claude Code attaché.
+Aucun test ne nécessite une session Claude Code live. Tous les tests reposent sur `mock-fs` + `mock-clock` + `mock-stdio` + `mock-logger`. Critère de succès : `bun test` passe **offline** et sans aucun tool Claude Code attaché.
 
 ### 29.4 Granularité des fichiers de test
 
@@ -2004,7 +2004,7 @@ Les fixtures ne contiennent **jamais** de données réelles de production. Toute
 | Error class properties (`C-ER-01..03`) | 3 |
 | **Total GREEN L1 companion** | **~33 tests** |
 
-**Consommation** : décommentés / activés au moment de l'implémentation de Layer 1 PUBLIC-API. Exécutés via un run CI séparé (`pnpm test:green-l1`).
+**Consommation** : décommentés / activés au moment de l'implémentation de Layer 1 PUBLIC-API. Exécutés via un run CI séparé (`bun test tests/green-l1`).
 
 ### 30.2 Retirés complètement du NIB-T
 

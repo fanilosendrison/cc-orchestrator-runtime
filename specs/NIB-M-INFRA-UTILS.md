@@ -123,7 +123,7 @@ export function generateRunId(): string {
 - Tri lexicographique ≡ tri chronologique (propriété ULID native).
 - **Pas de fallback** : si `ulid` throw (ne devrait jamais arriver), propager l'exception. Le runtime exit en bloc ERROR preflight.
 - **Usage unique** : `generateRunId` est utilisé pour le `runId` et pour le `ownerToken` du lock (cf `NIB-M-LOCK`). Même fonction, deux call sites.
-- Mockabilité : les tests peuvent stub `ulid()` via module mock (vitest `vi.mock`) pour des IDs déterministes.
+- Mockabilité : les tests peuvent stub `ulid()` via module mock (bun:test `mock.module` / `spyOn`) pour des IDs déterministes.
 
 ### 3.4 Tests NIB-T (rappel §8)
 
@@ -219,7 +219,7 @@ export function abortableSleep(delayMs: number, signal: AbortSignal): Promise<vo
 - **Aucune dépendance croisée entre les 3 modules**. `clock` est totalement indépendant, `run-id` import `ulid` (externe), `abortable-sleep` import `AbortedError` (NIB-M-ERRORS).
 - **Pas de logique métier** — ce sont des primitives techniques pures. Pas de retry, pas de validation, pas de formatage custom.
 - **Testable en isolation** — chaque module a son propre fichier de test (§9, §8, §10 NIB-T), pas de dépendances mutuelles.
-- **Mockabilité via module mock** — les tests d'autres modules (engine, bindings) mockent `clock` et `abortableSleep` via `vi.mock("../services/clock")` et injectent leur propre `Clock`.
+- **Mockabilité via module mock** — les tests d'autres modules (engine, bindings) mockent `clock` et `abortableSleep` via `mock.module("../services/clock", () => ({ ... }))` (bun:test) et injectent leur propre `Clock`.
 
 ---
 
