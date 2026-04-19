@@ -35,6 +35,7 @@ __pycache__/
 # ---------- IDE & Editor ----------
 .idea/
 .vscode/
+.claude/
 *.swp
 *.swo
 *~
@@ -82,3 +83,4 @@ PROJECT_INDEX.md
 SPEC_MANIFEST.md
 .index-state.json
 CLAUDE.md
+docs/NX-CC-ORCHESTRATOR-RUNTIME.md
