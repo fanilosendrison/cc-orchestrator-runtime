@@ -1,0 +1,41 @@
+{
+  "name": "cc-orchestrator-runtime",
+  "version": "0.1.0",
+  "description": "Normalized execution engine for phase-structured orchestrators inside Claude Code sessions. Snapshot-authoritative state, in-band stdout protocol, POSIX-grade I/O discipline.",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "test": "bun test",
+    "lint": "biome check src/ tests/",
+    "lint:fix": "biome check --write src/ tests/",
+    "typecheck": "tsc --noEmit",
+    "changelog": "git-cliff --output CHANGELOG.md"
+  },
+  "dependencies": {
+    "zod": "^3.22.0",
+    "ulid": "^2.3.0"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "^2.3.11",
+    "@types/bun": "^1.1.0",
+    "fast-check": "^3.23.0",
+    "typescript": "^5.7.0"
+  },
+  "engines": {
+    "node": ">=22"
+  },
+  "license": "UNLICENSED",
+  "private": true
+}
