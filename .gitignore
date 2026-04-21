@@ -85,6 +85,7 @@ SPEC_MANIFEST.md
 CLAUDE.md
 docs/NX-CC-ORCHESTRATOR-RUNTIME.md
 docs/EXECUTION-FLOW-WALKTHROUGH.md
+docs/UX-VISION-AND-GAPS.md
 
 # ---------- Claude Code loop-clean runtime artifacts ----------
 .claude/run/
