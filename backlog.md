@@ -28,3 +28,10 @@ Items triaged by loop-clean. Resolved items archived in `backlog.archive.md`.
 - [ ] [info] `src/engine/dispatch-loop.ts:685` — handleDone() JSON.stringify edge case for non-serializable values already handled per NIB-M-STATE-IO section 6. (correctness)
 - [ ] [info] spec-drift: RetryDecision — code uses discriminated union (retry: true | false) vs spec boolean. Code is stricter than spec. Reconcile spec to match code. (spec-drift)
 - [ ] [info] spec-drift: 11 generic type false positives from spec-drift tooling (DelegationBinding, Phase, PhaseIO, PhaseResult, StateFile, ValidationResult, DispatchContext). Tooling limitation, not real drift. (spec-drift-tooling)
+
+## 2026-04-23 loop-clean audit iter-0
+
+- [ ] [notable] `src/engine/handle-resume.ts:108-192` + `src/engine/dispatch-handlers.ts:33-119` — executeResumeRetry and executeRetryBranch are 80% identical (read manifest, increment attempt, reconstruct, write state, emit event, protocol block, release lock, exit). Extract shared retryAndDelegate helper in engine/shared.ts. (duplication)
+- [ ] [minor] `src/services/retry-resolver.ts:35-41` + `src/services/error-classifier.ts:6-8` — isOrchestratorError type guard duplicated. Export from error-classifier.ts and import in retry-resolver.ts. (duplication)
+- [ ] [minor] `src/engine/dispatch-handlers.ts` — 511 lines, exceeds 400-line project guideline. Extracting the retry branch (also fixes the duplication above) would bring it under threshold. (file-size)
+- [ ] [minor] `tests/` — 30 abbreviation findings from coding-standards scanner (foo, val, etc. in test fixtures). Semantically valid test placeholders but flagged by naming rules. Consider adding scanner exceptions for test directories or renaming to descriptive values. (naming / tests)
