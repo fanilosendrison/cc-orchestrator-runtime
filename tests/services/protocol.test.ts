@@ -18,7 +18,7 @@ describe("writeProtocolBlock DELEGATE (T-PR-01..03)", () => {
 			kind: "skill",
 			resumeCmd: RCMD,
 		});
-		expect(out).toContain("@@CC_ORCH@@");
+		expect(out).toContain("@@TURNLOCK@@");
 		expect(out).toContain("@@END@@");
 		expect(out).toContain("action: DELEGATE");
 		expect(out).toContain("kind: skill");
@@ -216,17 +216,17 @@ describe("parseProtocolBlock rejects (T-PR-20..24)", () => {
 			parseProtocolBlock(loadFixture("protocol/malformed-missing-end.txt")),
 		).toBeNull();
 	});
-	test("T-PR-22 | missing @@CC_ORCH@@ → null", () => {
+	test("T-PR-22 | missing @@TURNLOCK@@ → null", () => {
 		expect(parseProtocolBlock("version: 1\nrun_id: X\n@@END@@")).toBeNull();
 	});
 	test("T-PR-23 | version incompatible → null", () => {
 		const s =
-			"\n@@CC_ORCH@@\nversion: 2\nrun_id: X\norchestrator: y\naction: DONE\n@@END@@\n";
+			"\n@@TURNLOCK@@\nversion: 2\nrun_id: X\norchestrator: y\naction: DONE\n@@END@@\n";
 		expect(parseProtocolBlock(s)).toBeNull();
 	});
 	test("T-PR-24 | unknown action → null", () => {
 		const s =
-			"\n@@CC_ORCH@@\nversion: 1\nrun_id: X\norchestrator: y\naction: FOOBAR\n@@END@@\n";
+			"\n@@TURNLOCK@@\nversion: 1\nrun_id: X\norchestrator: y\naction: FOOBAR\n@@END@@\n";
 		expect(parseProtocolBlock(s)).toBeNull();
 	});
 });
@@ -274,7 +274,7 @@ describe("protocol properties (P-PR-a..d)", () => {
 			writeProtocolBlock("DONE", fields),
 		);
 	});
-	test("P-PR-c | block contains exactly one @@CC_ORCH@@ + one @@END@@", () => {
+	test("P-PR-c | block contains exactly one @@TURNLOCK@@ + one @@END@@", () => {
 		const out = writeProtocolBlock("DONE", {
 			runId: RID,
 			orchestrator: "x",
@@ -283,7 +283,7 @@ describe("protocol properties (P-PR-a..d)", () => {
 			phasesExecuted: 1,
 			durationMs: 10,
 		});
-		expect(out.match(/@@CC_ORCH@@/g)?.length).toBe(1);
+		expect(out.match(/@@TURNLOCK@@/g)?.length).toBe(1);
 		expect(out.match(/@@END@@/g)?.length).toBe(1);
 	});
 	test("P-PR-d | required fields always present", () => {

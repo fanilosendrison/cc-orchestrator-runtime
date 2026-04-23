@@ -2,7 +2,7 @@
 id: NIB-M-HANDLE-RESUME
 type: nib-module
 version: "1.0.0"
-scope: cc-orchestrator-runtime
+scope: turnlock
 module: handle-resume
 status: approved
 consumers: [claude-code]
@@ -11,7 +11,7 @@ superseded_by: []
 
 # NIB-M-HANDLE-RESUME — Logique spécifique du resume (§14.2 steps 11-15)
 
-**Package** : `cc-orchestrator-runtime`
+**Package** : `turnlock`
 **Source NX** : §14.2 steps 11-15 (identification pending, classification missing/malformed/parseable, deadline check, branche retry, entrée dispatch), §14.3 (timing effacement `pendingDelegation`)
 **NIB-T associé** : §17 (T-RS-01 à T-RS-31 resume), §18.2/§18.3 (T-RT-02, T-RT-04 retry post-timeout), §22.bis.2 (T-TM-04-06 deadline cross-reentry)
 **NIB-S référencé** : §7.1 (PendingDelegationRecord), §7.2 (per-attempt paths), §7.3 (malformed classification), I-15 (per-attempt paths), P-LOCK-RELEASE-SYSTEMATIC
@@ -550,4 +550,4 @@ Les fichiers d'`attempt` antérieurs sont **ignorés** :
 
 ---
 
-*cc-orchestrator-runtime — Implicit-Free Execution — "Reliability precedes intelligence."*
+*turnlock — Implicit-Free Execution — "Reliability precedes intelligence."*

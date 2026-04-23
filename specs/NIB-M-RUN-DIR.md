@@ -2,7 +2,7 @@
 id: NIB-M-RUN-DIR
 type: nib-module
 version: "1.0.0"
-scope: cc-orchestrator-runtime
+scope: turnlock
 module: run-dir
 status: approved
 consumers: [claude-code]
@@ -11,7 +11,7 @@ superseded_by: []
 
 # NIB-M-RUN-DIR — Résolution du RUN_DIR + cleanup rétention
 
-**Package** : `cc-orchestrator-runtime`
+**Package** : `turnlock`
 **Source NX** : §5.5 (resolveRunDir + cleanupOldRuns), §6.1 (retentionDays), §14.1 step 4-5
 **NIB-T associé** : §7 (T-RD-01 à T-RD-08, P-RD-a/b)
 **NIB-S référencé** : §5 P-ATOMIC-WRITE (non applicable ici — mkdir/rmdir sont non-atomiques), I-11 (lock per-runDir)
@@ -265,4 +265,4 @@ if (!fs.existsSync(runDir)) {
 
 ---
 
-*cc-orchestrator-runtime — Implicit-Free Execution — "Reliability precedes intelligence."*
+*turnlock — Implicit-Free Execution — "Reliability precedes intelligence."*

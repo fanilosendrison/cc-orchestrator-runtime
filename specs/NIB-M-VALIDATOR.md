@@ -2,7 +2,7 @@
 id: NIB-M-VALIDATOR
 type: nib-module
 version: "1.0.0"
-scope: cc-orchestrator-runtime
+scope: turnlock
 module: validator
 status: approved
 consumers: [claude-code]
@@ -11,7 +11,7 @@ superseded_by: []
 
 # NIB-M-VALIDATOR — Validation zod + summary d'erreur
 
-**Package** : `cc-orchestrator-runtime`
+**Package** : `turnlock`
 **Source NX** : §5.5 (validator signature), §14.2 step 12 (validation au consume), §11.5 (PII ≤ 200 chars)
 **NIB-T associé** : §5 (T-VA-01 à T-VA-10, P-VA-a/b/c)
 **NIB-S référencé** : I-5 (déterminisme), I-13 (PII)
@@ -276,4 +276,4 @@ if (!result.success) {
 
 ---
 
-*cc-orchestrator-runtime — Implicit-Free Execution — "Reliability precedes intelligence."*
+*turnlock — Implicit-Free Execution — "Reliability precedes intelligence."*

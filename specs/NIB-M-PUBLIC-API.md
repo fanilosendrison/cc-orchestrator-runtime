@@ -2,7 +2,7 @@
 id: NIB-M-PUBLIC-API
 type: nib-module
 version: "1.0.0"
-scope: cc-orchestrator-runtime
+scope: turnlock
 module: public-api
 status: approved
 consumers: [claude-code]
@@ -11,7 +11,7 @@ superseded_by: []
 
 # NIB-M-PUBLIC-API — Surface publique (exports, `definePhase`, constantes)
 
-**Package** : `cc-orchestrator-runtime`
+**Package** : `turnlock`
 **Source NX** : §5.2 (Layer 1), §6.1-§6.8 (contrat public), §5.6 (dépendances minimales)
 **NIB-T associé** : §27 (C-GL-01 à C-GL-13 surface, C-ER-01 à C-ER-03 errors, C-FC-01 à C-FC-12 fail-closed), §22 (T-CP composition récursive), §22.bis (T-TM temporal)
 **NIB-S référencé** : §6 (contrat public intégral), I-9 (surface stable), §5.6 (dépendances), §6.9 (fonctions + constantes)
@@ -320,7 +320,7 @@ Explicitement interdits dans `src/index.ts` :
 - Engine internals : `runDispatchLoop`, `runHandleResume`, `DispatchContext`, `LoadedResults`, `LockHandle`, `StateFile`, `PendingDelegationRecord`.
 - Constantes internes : `DEFAULT_MAX_ATTEMPTS`, `DEFAULT_BACKOFF_BASE_MS`, `DEFAULT_MAX_BACKOFF_MS`, `DEFAULT_TIMEOUT_MS`, `DEFAULT_RETENTION_DAYS`, `DEFAULT_IDLE_LEASE_MS`, `MANIFEST_VERSION`.
 
-**Test C-GL-02** vérifie que le module `cc-orchestrator-runtime` n'expose pas ces symboles.
+**Test C-GL-02** vérifie que le module `turnlock` n'expose pas ces symboles.
 
 ### 3.3 Types exportés en `type` uniquement (pas valeurs runtime)
 
@@ -362,7 +362,7 @@ Aucune sous-dépendance ne doit apporter d'API visible au consommateur (isolé).
 ### 4.1 Définition d'un orchestrateur
 
 ```ts
-import { runOrchestrator, definePhase, type OrchestratorConfig } from "cc-orchestrator-runtime";
+import { runOrchestrator, definePhase, type OrchestratorConfig } from "turnlock";
 import { z } from "zod";
 
 interface MyState {
@@ -402,7 +402,7 @@ runOrchestrator(config);
 ### 4.2 Custom logger
 
 ```ts
-import type { OrchestratorLogger, OrchestratorEvent } from "cc-orchestrator-runtime";
+import type { OrchestratorLogger, OrchestratorEvent } from "turnlock";
 
 const sink: OrchestratorEvent[] = [];
 const customLogger: OrchestratorLogger = { emit: (ev) => sink.push(ev) };
@@ -416,7 +416,7 @@ runOrchestrator({
 ### 4.3 Inspection d'erreur côté catch (pour consommateurs avancés)
 
 ```ts
-import { RunLockedError, OrchestratorError } from "cc-orchestrator-runtime";
+import { RunLockedError, OrchestratorError } from "turnlock";
 
 // Attention : runOrchestrator ne reject JAMAIS. Cette section n'est JAMAIS exécutée.
 // Le pattern est uniquement pour un consommateur qui compose (wrappper higher-order).
@@ -464,7 +464,7 @@ import { RunLockedError, OrchestratorError } from "cc-orchestrator-runtime";
 
 ```json
 {
-  "name": "cc-orchestrator-runtime",
+  "name": "turnlock",
   "version": "0.1.0",
   "type": "module",
   "main": "./dist/index.js",
@@ -538,4 +538,4 @@ import { RunLockedError, OrchestratorError } from "cc-orchestrator-runtime";
 
 ---
 
-*cc-orchestrator-runtime — Implicit-Free Execution — "Reliability precedes intelligence."*
+*turnlock — Implicit-Free Execution — "Reliability precedes intelligence."*

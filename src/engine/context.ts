@@ -23,7 +23,7 @@ export interface LoadedResults {
 }
 
 export class TestExitSignal {
-	readonly __ccOrchExit = true;
+	readonly __turnlockExit = true;
 	constructor(public readonly code: number) {}
 }
 
@@ -36,7 +36,7 @@ const IS_TEST = (() => {
 	)
 		return true;
 	if (process.env.NODE_ENV === "test") return true;
-	if (process.env.CC_ORCH_TEST === "1") return true;
+	if (process.env.TURNLOCK_TEST === "1") return true;
 	return false;
 })();
 
@@ -51,7 +51,7 @@ export function isTestExitSignal(err: unknown): err is TestExitSignal {
 	return (
 		typeof err === "object" &&
 		err !== null &&
-		(err as { __ccOrchExit?: boolean }).__ccOrchExit === true
+		(err as { __turnlockExit?: boolean }).__turnlockExit === true
 	);
 }
 

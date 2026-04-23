@@ -38,7 +38,7 @@ export function createMockStdio(): MockStdio {
 		getProtocolBlocks(): ParsedProtocolBlock[] {
 			const blocks: ParsedProtocolBlock[] = [];
 			let remaining = stdout;
-			while (remaining.includes("@@CC_ORCH@@")) {
+			while (remaining.includes("@@TURNLOCK@@")) {
 				try {
 					const parsed = parseProtocolBlock(remaining);
 					if (parsed === null) break;

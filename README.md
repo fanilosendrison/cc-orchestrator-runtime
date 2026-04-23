@@ -1,4 +1,4 @@
-# cc-orchestrator-runtime
+# turnlock
 
 **A durable finite-state-machine runtime for TypeScript.** Runs a typed phase machine whose every stable transition is atomically snapshotted to disk. Suspends by **terminating its own process** with a structured stdout block, and resumes when re-invoked with `--resume --run-id <id>` — the state lives on disk between runs, not in memory.
 
@@ -6,7 +6,7 @@ The core is **host-agnostic**: it emits opaque delegation requests (`kind: "skil
 
 See [`docs/SEPARATION.md`](docs/SEPARATION.md) for the ongoing work to cleanly separate the generic runtime from its Claude Code integration.
 
-Snapshot-authoritative state, in-band stdout protocol, POSIX-grade I/O discipline. Currently at specification stage — see `specs/` for normative briefs (NIBs) and `docs/NX-CC-ORCHESTRATOR-RUNTIME.md` for the consolidated design.
+Snapshot-authoritative state, in-band stdout protocol, POSIX-grade I/O discipline. Currently at specification stage — see `specs/` for normative briefs (NIBs) and `docs/NX-TURNLOCK.md` for the consolidated design.
 
 ## Getting Started
 
@@ -17,8 +17,8 @@ Snapshot-authoritative state, in-band stdout protocol, POSIX-grade I/O disciplin
 ### Install
 
 ```bash
-git clone git@github.com:fanilosendrison/cc-orchestrator-runtime.git
-cd cc-orchestrator-runtime
+git clone git@github.com:fanilosendrison/turnlock.git
+cd turnlock
 bun install
 ```
 

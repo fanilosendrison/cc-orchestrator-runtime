@@ -2,7 +2,7 @@
 id: NIB-M-STATE-IO
 type: nib-module
 version: "1.0.0"
-scope: cc-orchestrator-runtime
+scope: turnlock
 module: state-io
 status: approved
 consumers: [claude-code]
@@ -11,7 +11,7 @@ superseded_by: []
 
 # NIB-M-STATE-IO — Lecture/écriture atomique du `state.json`
 
-**Package** : `cc-orchestrator-runtime`
+**Package** : `turnlock`
 **Source NX** : §4.3 (atomicité écriture), §4.10 (JSON-only), §5.5 (signature), §7.1 (forme canonique)
 **NIB-T associé** : §6 (T-SI-01 à T-SI-12, P-SI-a/b/c), §26.2 (P-03/P-04 idempotence)
 **NIB-S référencé** : §7.1 (`StateFile<State>` forme canonique), I-3 (atomicité), I-10 (JSON-only), I-12 (snapshot-authoritative)
@@ -444,4 +444,4 @@ writeStateAtomic(runDir, newState, config.stateSchema);
 
 ---
 
-*cc-orchestrator-runtime — Implicit-Free Execution — "Reliability precedes intelligence."*
+*turnlock — Implicit-Free Execution — "Reliability precedes intelligence."*

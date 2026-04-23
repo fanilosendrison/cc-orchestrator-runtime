@@ -2,7 +2,7 @@
 id: NIB-M-ERROR-CLASSIFIER
 type: nib-module
 version: "1.0.0"
-scope: cc-orchestrator-runtime
+scope: turnlock
 module: error-classifier
 status: approved
 consumers: [claude-code]
@@ -11,7 +11,7 @@ superseded_by: []
 
 # NIB-M-ERROR-CLASSIFIER — Classification transient / permanent / abort / unknown
 
-**Package** : `cc-orchestrator-runtime`
+**Package** : `turnlock`
 **Source NX** : §5.5 (classify signature), §8.1 (classification transient vs permanent)
 **NIB-T associé** : §3 (T-EC-01 à T-EC-14, P-EC-a/b)
 **NIB-S référencé** : §8.1 (classification canonique)
@@ -169,7 +169,7 @@ classify(undefined);                                 // "unknown"
 ### 8.1 Consommation hypothétique par consommateurs futurs (reporting, UI)
 
 ```ts
-import { classify } from "cc-orchestrator-runtime/internal/error-classifier";  // si exporté un jour
+import { classify } from "turnlock/internal/error-classifier";  // si exporté un jour
 
 const category = classify(err);
 if (category === "transient") console.log("Will retry");
@@ -216,4 +216,4 @@ else if (category === "abort") console.log("User aborted");
 
 ---
 
-*cc-orchestrator-runtime — Implicit-Free Execution — "Reliability precedes intelligence."*
+*turnlock — Implicit-Free Execution — "Reliability precedes intelligence."*

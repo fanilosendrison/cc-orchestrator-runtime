@@ -1,5 +1,5 @@
 
-@@CC_ORCH@@
+@@TURNLOCK@@
 version: 1
 run_id: 01HX0000000000000000000001
 orchestrator: test-orch
@@ -10,7 +10,7 @@ phases_executed: 1
 duration_ms: 100
 @@END@@
 
-@@CC_ORCH@@
+@@TURNLOCK@@
 version: 1
 run_id: 01HX0000000000000000000001
 orchestrator: test-orch

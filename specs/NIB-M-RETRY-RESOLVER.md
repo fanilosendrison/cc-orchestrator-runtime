@@ -2,7 +2,7 @@
 id: NIB-M-RETRY-RESOLVER
 type: nib-module
 version: "1.0.0"
-scope: cc-orchestrator-runtime
+scope: turnlock
 module: retry-resolver
 status: approved
 consumers: [claude-code]
@@ -11,7 +11,7 @@ superseded_by: []
 
 # NIB-M-RETRY-RESOLVER — Décision de retry matérialisée
 
-**Package** : `cc-orchestrator-runtime`
+**Package** : `turnlock`
 **Source NX** : §8.2 (table de décision), §9.2 (policy), §10.1 (RetryDecision)
 **NIB-T associé** : §2 (T-RR-01 à T-RR-23, P-RR-a/b/c/d/e)
 **NIB-S référencé** : §6.8 (RetryPolicy + defaults + effectiveRetryPolicy), §8 (taxonomie), §7.7 (RetryDecision shape), I-5 (déterminisme)
@@ -316,4 +316,4 @@ if (anyMalformed) {
 
 ---
 
-*cc-orchestrator-runtime — Implicit-Free Execution — "Reliability precedes intelligence."*
+*turnlock — Implicit-Free Execution — "Reliability precedes intelligence."*

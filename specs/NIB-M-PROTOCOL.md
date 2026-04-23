@@ -2,16 +2,16 @@
 id: NIB-M-PROTOCOL
 type: nib-module
 version: "1.0.0"
-scope: cc-orchestrator-runtime
+scope: turnlock
 module: protocol
 status: approved
 consumers: [claude-code]
 superseded_by: []
 ---
 
-# NIB-M-PROTOCOL — Writer et parser du bloc `@@CC_ORCH@@`
+# NIB-M-PROTOCOL — Writer et parser du bloc `@@TURNLOCK@@`
 
-**Package** : `cc-orchestrator-runtime`
+**Package** : `turnlock`
 **Source NX** : §7.4 (format protocole intégral, 4 actions, règles génériques)
 **NIB-T associé** : §4 (T-PR-01 à T-PR-26, P-PR-a/b/c/d)
 **NIB-S référencé** : §7.4 (forme canonique), I-5 (déterminisme), I-13 (PII), I-9 (surface stable — `PROTOCOL_VERSION`)
@@ -20,7 +20,7 @@ superseded_by: []
 
 ## 1. Purpose
 
-Deux fonctions pures pour écrire et parser le protocole `@@CC_ORCH@@` :
+Deux fonctions pures pour écrire et parser le protocole `@@TURNLOCK@@` :
 
 - **`writeProtocolBlock`** — construit une string formatée selon §7.4 NX pour une des 4 actions (`DELEGATE`, `DONE`, `ERROR`, `ABORTED`), avec les champs spécifiques typés par action.
 - **`parseProtocolBlock`** — extrait un `ProtocolBlock` typé depuis une string stdout (potentiellement avec bruit avant/après). Retourne `null` si aucun bloc valide trouvé.
@@ -100,7 +100,7 @@ export function parseProtocolBlock(stdout: string): ParsedProtocolBlock | null;
 
 ```
 <ligne vide>
-@@CC_ORCH@@
+@@TURNLOCK@@
 version: 1
 run_id: <value | null>
 orchestrator: <value>
@@ -141,7 +141,7 @@ function serializeValue(value: string | number | boolean | null): string {
 function writeDelegate(fields: DelegateFields): string {
   return [
     "",
-    "@@CC_ORCH@@",
+    "@@TURNLOCK@@",
     `version: ${PROTOCOL_VERSION}`,
     `run_id: ${serializeValue(fields.runId)}`,
     `orchestrator: ${serializeValue(fields.orchestrator)}`,
@@ -162,7 +162,7 @@ function writeDelegate(fields: DelegateFields): string {
 function writeDone(fields: DoneFields): string {
   return [
     "",
-    "@@CC_ORCH@@",
+    "@@TURNLOCK@@",
     `version: ${PROTOCOL_VERSION}`,
     `run_id: ${serializeValue(fields.runId)}`,
     `orchestrator: ${serializeValue(fields.orchestrator)}`,
@@ -184,7 +184,7 @@ function writeDone(fields: DoneFields): string {
 function writeError(fields: ErrorFields): string {
   return [
     "",
-    "@@CC_ORCH@@",
+    "@@TURNLOCK@@",
     `version: ${PROTOCOL_VERSION}`,
     `run_id: ${serializeValue(fields.runId)}`,           // null autorisé (preflight)
     `orchestrator: ${serializeValue(fields.orchestrator)}`,
@@ -206,7 +206,7 @@ function writeError(fields: ErrorFields): string {
 function writeAborted(fields: AbortedFields): string {
   return [
     "",
-    "@@CC_ORCH@@",
+    "@@TURNLOCK@@",
     `version: ${PROTOCOL_VERSION}`,
     `run_id: ${serializeValue(fields.runId)}`,
     `orchestrator: ${serializeValue(fields.orchestrator)}`,
@@ -241,9 +241,9 @@ export function writeProtocolBlock(action: ProtocolAction, fields: any): string 
 
 ```ts
 function parseProtocolBlock(stdout: string): ParsedProtocolBlock | null {
-  // 1. Trouver la première ligne @@CC_ORCH@@
+  // 1. Trouver la première ligne @@TURNLOCK@@
   const lines = stdout.split(/\r?\n/);
-  const startIdx = lines.findIndex((l) => l.trim() === "@@CC_ORCH@@");
+  const startIdx = lines.findIndex((l) => l.trim() === "@@TURNLOCK@@");
   if (startIdx === -1) return null;
 
   // 2. Trouver le @@END@@ correspondant après startIdx
@@ -324,9 +324,9 @@ function snakeToCamel(s: string): string {
 
 ### 4.3 Règles normatives
 
-- **Bruit avant/après le bloc toléré** : le parser scan pour la première ligne `@@CC_ORCH@@` (T-PR-26). Tout ce qui précède est ignoré.
+- **Bruit avant/après le bloc toléré** : le parser scan pour la première ligne `@@TURNLOCK@@` (T-PR-26). Tout ce qui précède est ignoré.
 - **Pas de `@@END@@`** → `null` (T-PR-21).
-- **Pas de `@@CC_ORCH@@`** → `null` (T-PR-22).
+- **Pas de `@@TURNLOCK@@`** → `null` (T-PR-22).
 - **Version incompatible (`version: 2`)** → `null` (T-PR-23). Le runtime émetteur et le parser côté parent agent sont alignés sur `PROTOCOL_VERSION` ; un mismatch signale une incompatibilité de versions runtime.
 - **Action inconnue** → `null` (T-PR-24).
 - **Deux blocs dans la même string** : retourne le **premier** (T-PR-25). La règle §7.4 "un seul bloc par invocation" est garantie par le runtime émetteur ; le parser est tolérant.
@@ -355,7 +355,7 @@ const block = writeProtocolBlock("DELEGATE", {
 });
 // Produit (avec lignes vides auto) :
 //
-// @@CC_ORCH@@
+// @@TURNLOCK@@
 // version: 1
 // run_id: 01HXABC
 // orchestrator: senior-review
@@ -393,7 +393,7 @@ const block = writeProtocolBlock("ERROR", {
 const stdout = `
 Some stderr leak
 Another line
-@@CC_ORCH@@
+@@TURNLOCK@@
 version: 1
 run_id: 01HX
 orchestrator: foo
@@ -423,7 +423,7 @@ const block = parseProtocolBlock(stdout);
 |---|---|
 | String vide en entrée | `null` |
 | Bloc avec ligne vide au milieu | Tolérée (skip) |
-| Bloc avec trailing whitespace sur une ligne | `line.trim()` pour détecter `@@CC_ORCH@@` / `@@END@@`, mais parsing strict sur `key: value` |
+| Bloc avec trailing whitespace sur une ligne | `line.trim()` pour détecter `@@TURNLOCK@@` / `@@END@@`, mais parsing strict sur `key: value` |
 | `version: 1.0` (avec décimale) | Parsé comme `1` (nombre) → match `PROTOCOL_VERSION` si === 1, sinon `null` |
 | Message contient des `"` | Quoted et échappé par `JSON.stringify` : `"escape \\\"inside\\\""` |
 | Message contient `\n` | Quoted, sérialisé `"with\\nnewline"` |
@@ -456,7 +456,7 @@ const block = parseProtocolBlock(stdout);
 | Parser happy | T-PR-13 à T-PR-19 (tous kinds + boolean/number parsing) |
 | Parser rejets | T-PR-20 à T-PR-24 (pas de bloc, manque delim, version incompatible, action inconnue) |
 | Parser multiplicité | T-PR-25 (2 blocs → premier), T-PR-26 (bruit avant) |
-| Propriétés | P-PR-a (round-trip 20 variantes), P-PR-b (pureté), P-PR-c (`@@CC_ORCH@@` + `@@END@@` présents), P-PR-d (champs obligatoires version/run_id/orchestrator/action) |
+| Propriétés | P-PR-a (round-trip 20 variantes), P-PR-b (pureté), P-PR-c (`@@TURNLOCK@@` + `@@END@@` présents), P-PR-d (champs obligatoires version/run_id/orchestrator/action) |
 
 ---
 
@@ -498,7 +498,7 @@ process.exit(1);
 // Parent agent lit stdout de l'orchestrateur.
 const stdout = await captureStdout(cmd);
 const block = parseProtocolBlock(stdout);
-if (!block) throw new Error("No CC_ORCH block in stdout");
+if (!block) throw new Error("No TURNLOCK block in stdout");
 switch (block.action) {
   case "DELEGATE": /* lire manifest, invoquer skill/agent/batch, relancer resume_cmd */ break;
   case "DONE":     /* lire output, présenter */ break;
@@ -519,7 +519,7 @@ switch (block.action) {
    - Inclut `version: 1` (literal PROTOCOL_VERSION).
 3. **`parseProtocolBlock`** :
    - Retourne `null` sur format invalide (pas de delimiter, version incompatible, action inconnue).
-   - Tolère le bruit avant `@@CC_ORCH@@` (T-PR-26).
+   - Tolère le bruit avant `@@TURNLOCK@@` (T-PR-26).
    - Retourne le premier bloc si plusieurs (T-PR-25).
    - Normalise snake_case → camelCase dans `fields`.
    - Parse boolean (`true`/`false`) et number littéralement.
@@ -554,4 +554,4 @@ switch (block.action) {
 
 ---
 
-*cc-orchestrator-runtime — Implicit-Free Execution — "Reliability precedes intelligence."*
+*turnlock — Implicit-Free Execution — "Reliability precedes intelligence."*

@@ -2,7 +2,7 @@
 id: NIB-M-DISPATCH-LOOP
 type: nib-module
 version: "1.0.0"
-scope: cc-orchestrator-runtime
+scope: turnlock
 module: dispatch-loop
 status: approved
 consumers: [claude-code]
@@ -11,7 +11,7 @@ superseded_by: []
 
 # NIB-M-DISPATCH-LOOP — Boucle de dispatch + PhaseIO + PhaseResult handling
 
-**Package** : `cc-orchestrator-runtime`
+**Package** : `turnlock`
 **Source NX** : §6.2 (Phase + deep-freeze + single PhaseResult), §6.3 (PhaseIO), §6.4 (PhaseResult mapping), §14.1 step 16 (boucle détaillée a-n), §14.1 step 16.i catch (retry post-schema-error), §14.3 (effacement pendingDelegation)
 **NIB-T associé** : §15 (T-RO-01 à T-RO-19 + T-RO-01b/c), §16 (T-RO-20 à T-RO-44 sous-cas), §18 (T-RT retry post-délégation), §19 (T-RO-40-42 per-attempt isolation), §17.3 (T-CS consumption check), §16.3 (T-DF-01-03 single PhaseResult), §16.4 (T-DF-04-08 deep-freeze)
 **NIB-S référencé** : §6.2 (Phase rules), §6.3 (PhaseIO methods), §6.4 (PhaseResult), §7.1 (StateFile mutation règles), §8.2 (retry table), P-DEEP-FREEZE, P-SINGLE-PHASE-RESULT, P-PER-ATTEMPT-PATHS, P-LOCK-RELEASE-SYSTEMATIC
@@ -940,4 +940,4 @@ function selectBinding(kind: "skill" | "agent" | "agent-batch"): DelegationBindi
 
 ---
 
-*cc-orchestrator-runtime — Implicit-Free Execution — "Reliability precedes intelligence."*
+*turnlock — Implicit-Free Execution — "Reliability precedes intelligence."*

@@ -1,25 +1,25 @@
 ---
-id: NIB-S-CCOR
+id: NIB-S-TURNLOCK
 type: nib-system
 version: "1.0.0"
-scope: cc-orchestrator-runtime
+scope: turnlock
 status: approved
 consumers: [claude-code]
 superseded_by: []
 ---
 
-# NIB-S-CCOR — System Brief
+# NIB-S-TURNLOCK — System Brief
 
-**Package** : `cc-orchestrator-runtime`
+**Package** : `turnlock`
 **Statut** : v1.0 — éclatement NIB actif, consommable par Claude Code
-**Source NX** : `docs/NX-CC-ORCHESTRATOR-RUNTIME.md` v0.8 (2026-04-19)
-**NIB-T associé** : `specs/NIB-T-CCOR.md` v1.0
+**Source NX** : `docs/NX-TURNLOCK.md` v0.8 (2026-04-19)
+**NIB-T associé** : `specs/NIB-T-TURNLOCK.md` v1.0
 
 ---
 
 ## 0. Préambule
 
-Ce document est le **System Brief** de `cc-orchestrator-runtime`. Il établit le frame dans lequel tous les NIB-M et le NIB-T opèrent. Il définit :
+Ce document est le **System Brief** de `turnlock`. Il établit le frame dans lequel tous les NIB-M et le NIB-T opèrent. Il définit :
 
 - L'objectif système et la frontière v1 (§1-§2)
 - Les invariants globaux transversaux à tous les modules (§3)
@@ -43,9 +43,9 @@ L'écosystème `~/.claude/skills/` de Fanilo contient plusieurs skills dont l'ex
 
 Sans package mutualisé, chaque nouvel orchestrateur réimplémente ~500 lignes de plomberie (state durable, retry, timeout, émission protocole, validation schema, logs) avec des divergences subtiles qui produisent des bugs composés.
 
-### 1.2 Réponse `cc-orchestrator-runtime`
+### 1.2 Réponse `turnlock`
 
-Un package infrastructure TypeScript qui fournit un moteur d'exécution normalisée pour orchestrateurs structurés en phases, piloté par un protocole in-band sur stdout (`@@CC_ORCH@@`) consommable par un agent Claude Code parent.
+Un package infrastructure TypeScript qui fournit un moteur d'exécution normalisée pour orchestrateurs structurés en phases, piloté par un protocole in-band sur stdout (`@@TURNLOCK@@`) consommable par un agent Claude Code parent.
 
 Chaque run traverse un moteur déterministe où les décisions mécaniques (retry, timeout, classification d'erreurs) sont matérialisées en objets explicites — pas une séquence impérative qui cache ses branches.
 
@@ -53,14 +53,14 @@ Chaque run traverse un moteur déterministe où les décisions mécaniques (retr
 
 - Package **infrastructure transversale** pour le tooling personnel Claude Code de Fanilo. Consommé par les orchestrateurs qui vivent dans `~/.claude/scripts/<name>/` et qui sont déclenchés par un skill dans `~/.claude/skills/<name>/`.
 - **Strictement Claude-Code-dépendant** : la primitive de délégation (émission de signal + exit + re-entry après invocation Skill/Agent par l'agent parent) n'a de sens qu'à l'intérieur d'une session Claude Code.
-- Distinct de `@vegacorp/llm-runtime` : runtime provider-agnostique pour appels LLM directs HTTP. Les deux runtimes peuvent coexister ; un orchestrateur `cc-orchestrator-runtime` peut, en théorie, utiliser `llm-runtime` pour un call LLM direct dans une phase — cas non ciblé v1 mais pas interdit.
+- Distinct de `@vegacorp/llm-runtime` : runtime provider-agnostique pour appels LLM directs HTTP. Les deux runtimes peuvent coexister ; un orchestrateur `turnlock` peut, en théorie, utiliser `llm-runtime` pour un call LLM direct dans une phase — cas non ciblé v1 mais pas interdit.
 - Distinct de Temporal / Inngest / Trigger.dev : reprend les concepts (state durable, retry policies, materialized decisions) mais pas la forme (pas de serveur, pas de coordination distribuée, pas de déterminisme de workflow imposé).
 
 ### 1.4 Divergence architecturale : snapshot-authoritative, pas event-sourced
 
 Décision structurante : `state.json` est la **source de vérité autoritative unique**. Écrasé à chaque transition, toujours cohérent avec le dernier commit applicatif des phases. `events.ndjson` est un **audit trail du flux** (append-only, mirror de stderr), jamais la source reconstructible de `state.data`.
 
-Temporal impose le pur event sourcing (`state = f(events)`) en contraignant les workflows à émettre des commandes déterministes. `cc-orchestrator-runtime` refuse cette contrainte : les phases sont du TS arbitraire qui retourne `nextState` via calcul libre. Le pur event sourcing Temporal n'est donc pas applicable — sans déterminisme des phases, le replay d'events ne peut reproduire un state.
+Temporal impose le pur event sourcing (`state = f(events)`) en contraignant les workflows à émettre des commandes déterministes. `turnlock` refuse cette contrainte : les phases sont du TS arbitraire qui retourne `nextState` via calcul libre. Le pur event sourcing Temporal n'est donc pas applicable — sans déterminisme des phases, le replay d'events ne peut reproduire un state.
 
 Conséquence : pas de "guerre snapshot vs events rejoués". `state.json` gagne toujours. `events.ndjson` sert au debug forensique, à la corrélation cross-run via `runId`, et à la reconstruction du **flux** (phases traversées, délégations émises, retries, erreurs) — jamais de `state.data`.
 
@@ -74,7 +74,7 @@ Conséquence : pas de "guerre snapshot vs events rejoués". `state.json` gagne t
 - Persistence **atomique** (tmp + rename) de `state.json` à chaque transition stable
 - Chargement du state au démarrage pour reprise à la phase courante
 - **Délégation** vers un skill (`delegateSkill`), un sub-agent (`delegateAgent`), ou un batch parallèle de sub-agents (`delegateAgentBatch`)
-- Émission d'un **protocole de signal** standardisé sur stdout (bloc `@@CC_ORCH@@ ... @@END@@`)
+- Émission d'un **protocole de signal** standardisé sur stdout (bloc `@@TURNLOCK@@ ... @@END@@`)
 - **Validation lazy avec enforcement exact-once** des résultats via `io.consumePendingResult(schema)` / `io.consumePendingBatchResults(schema)` côté phase de reprise
 - **Retry** automatique avec backoff exponentiel sur résultat invalide, timeout de délégation, ou JSON malformé
 - **Timeout** par délégation (durée max entre émission signal et disponibilité résultat), mesuré en wall-clock epoch ms
@@ -122,7 +122,7 @@ Le runtime n'incarne **jamais** de décision sémantique. Toute décision séman
 
 ### I-2 — Re-entry comme primitive de délégation
 
-Le runtime tourne dans un **process transitoire**. Une invocation = un run partiel jusqu'à une demande de délégation ou terminaison. Le process exit dès `@@CC_ORCH@@` émis. L'agent parent relance après chaque délégation terminée. Conséquence normative : tout state orchestrateur est **JSON-sérialisable**. Pas de closures, pas de `Map`/`Set` non-sérialisés, pas de handles.
+Le runtime tourne dans un **process transitoire**. Une invocation = un run partiel jusqu'à une demande de délégation ou terminaison. Le process exit dès `@@TURNLOCK@@` émis. L'agent parent relance après chaque délégation terminée. Conséquence normative : tout state orchestrateur est **JSON-sérialisable**. Pas de closures, pas de `Map`/`Set` non-sérialisés, pas de handles.
 
 ### I-3 — Atomicité de l'écriture d'état
 
@@ -130,7 +130,7 @@ Toute écriture de fichier d'état (`state.json`, manifests, résultats, lock up
 
 ### I-4 — Fail-closed universel
 
-Toute erreur → exit code ≠ 0 + émission `@@CC_ORCH@@ action: ERROR`. Le runtime ne retourne jamais de résultat dégradé. Les **préflight errors** (config invalide, state manquant/corrompu au resume, mismatch runId/orchestratorName) émettent également un bloc ERROR, avec `run_id: null` si le runId n'a pas encore été généré/adopté. **Aucun throw brut** ne remonte depuis `runOrchestrator()` — tout throw interne est capté par le top-level `try/catch` et converti en bloc ERROR + exit.
+Toute erreur → exit code ≠ 0 + émission `@@TURNLOCK@@ action: ERROR`. Le runtime ne retourne jamais de résultat dégradé. Les **préflight errors** (config invalide, state manquant/corrompu au resume, mismatch runId/orchestratorName) émettent également un bloc ERROR, avec `run_id: null` si le runId n'a pas encore été généré/adopté. **Aucun throw brut** ne remonte depuis `runOrchestrator()` — tout throw interne est capté par le top-level `try/catch` et converti en bloc ERROR + exit.
 
 ### I-5 — Déterminisme mécanique
 
@@ -146,7 +146,7 @@ Chaque run qui émet `orchestrator_start` émet `orchestrator_end`. Entre les de
 
 ### I-7 — Abort propagé
 
-Tout `SIGINT`/`SIGTERM` reçu par le process interrompt la phase courante proprement : `io.signal` abort, sleeps de retry interrompus, flush logger, release lock, émission `@@CC_ORCH@@ action: ABORTED`, exit 130 (SIGINT) ou 143 (SIGTERM). `SIGKILL` non gérable — lock orphelin expire via lease idle.
+Tout `SIGINT`/`SIGTERM` reçu par le process interrompt la phase courante proprement : `io.signal` abort, sleeps de retry interrompus, flush logger, release lock, émission `@@TURNLOCK@@ action: ABORTED`, exit 130 (SIGINT) ou 143 (SIGTERM). `SIGKILL` non gérable — lock orphelin expire via lease idle.
 
 ### I-8 — Configuration figée au run-init
 
@@ -337,7 +337,7 @@ export interface OrchestratorConfig<State extends object = object> {
   /**
    * Builder de la commande de reprise (required).
    * Le runtime appelle resumeCommand(runId) à chaque délégation et place le résultat
-   * dans le champ `resume_cmd` du bloc @@CC_ORCH@@ action: DELEGATE.
+   * dans le champ `resume_cmd` du bloc @@TURNLOCK@@ action: DELEGATE.
    * DOIT retourner une commande complète : interpréteur + main + --run-id <runId> --resume.
    * Exemple : (runId) => `bun run ~/.claude/scripts/senior-review/main.ts --run-id ${runId} --resume`
    */
@@ -483,11 +483,11 @@ export type PhaseResult<State, Output = void> =
 | `PhaseResult.kind` (TS interne) | Protocole stdout | Exit code |
 |---|---|---|
 | `"transition"` | aucun (continue boucle in-process) | — |
-| `"delegate"` | `@@CC_ORCH@@ action: DELEGATE` | 0 |
-| `"done"` | `@@CC_ORCH@@ action: DONE` | 0 |
-| `"fail"` | `@@CC_ORCH@@ action: ERROR` | 1 |
-| (exception utilisateur non catchée) | `@@CC_ORCH@@ action: ERROR` | 1 |
-| (signal SIGINT / SIGTERM) | `@@CC_ORCH@@ action: ABORTED` | 130 / 143 |
+| `"delegate"` | `@@TURNLOCK@@ action: DELEGATE` | 0 |
+| `"done"` | `@@TURNLOCK@@ action: DONE` | 0 |
+| `"fail"` | `@@TURNLOCK@@ action: ERROR` | 1 |
+| (exception utilisateur non catchée) | `@@TURNLOCK@@ action: ERROR` | 1 |
+| (signal SIGINT / SIGTERM) | `@@TURNLOCK@@ action: ABORTED` | 130 / 143 |
 
 Aucun autre verbe n'est utilisé dans la suite du corpus. `fail` désigne le résultat TS, `ERROR` désigne l'action protocole. Deux concepts, un mapping.
 
@@ -809,14 +809,14 @@ interface DelegationManifest {
 - Fichier présent mais JSON unparseable → `DelegationSchemaError`. Logger uniquement `path` + `fileSizeBytes`, **jamais** d'extrait de contenu ni de message `JSON.parse`.
 - Pour `agent-batch` : chaque fichier doit être présent et valide. Un seul manquant → même classification que single delegation ; un seul malformed → `DelegationSchemaError` global.
 
-### 7.4 Protocole `@@CC_ORCH@@`
+### 7.4 Protocole `@@TURNLOCK@@`
 
 Émis sur stdout par le runtime pour communiquer avec l'agent parent.
 
 **Forme générique** :
 
 ```
-@@CC_ORCH@@
+@@TURNLOCK@@
 version: 1
 run_id: <ulid> | null
 orchestrator: <name>
@@ -827,7 +827,7 @@ action: <ACTION>
 
 **Règles normatives** :
 
-- Le bloc commence par `@@CC_ORCH@@` sur une ligne seule.
+- Le bloc commence par `@@TURNLOCK@@` sur une ligne seule.
 - Le bloc finit par `@@END@@` sur une ligne seule.
 - Entre les deux : lignes `key: value` (YAML-subset simplifié), une par ligne.
 - Valeurs autorisées : **strings**, **nombres** (entiers ou décimaux), **booléens** (`true`/`false`), ou `null`. Pas de structure inline.
@@ -1074,11 +1074,11 @@ while (true) {
   n. Switch result.kind :
      - "transition" : update state, continue boucle
      - "delegate" : manifest + pendingDelegation + usedLabels + persist state
-                    + log delegation_emit + emit @@CC_ORCH@@ DELEGATE + release lock + exit(0)
+                    + log delegation_emit + emit @@TURNLOCK@@ DELEGATE + release lock + exit(0)
      - "done" : write output.json + persist state + log orchestrator_end
-                + emit @@CC_ORCH@@ DONE + release lock + exit(0)
+                + emit @@TURNLOCK@@ DONE + release lock + exit(0)
      - "fail" : persist state + log phase_error + orchestrator_end
-                + emit @@CC_ORCH@@ ERROR + release lock + exit(1)
+                + emit @@TURNLOCK@@ ERROR + release lock + exit(1)
 }
 
 Détaillé dans NIB-M-DISPATCH-LOOP.
@@ -1130,7 +1130,7 @@ Le NIB-S est considéré complet si :
 
 ## 12. Référence au NIB-T
 
-Le NIB-T (`NIB-T-CCOR v1.0`) est déjà rédigé. Il couvre :
+Le NIB-T (`NIB-T-TURNLOCK v1.0`) est déjà rédigé. Il couvre :
 
 - Les fonctions pures des services L4 (retry-resolver, classify, parseProtocolBlock/writeProtocolBlock, validateResult, readState/writeStateAtomic, resolveRunDir/cleanupOldRuns, generateRunId, clock, abortableSleep)
 - Le lock (§11) — acquire O_EXCL, refresh phase-start, release avec ownerToken, events lock_conflict, SIGKILL crash recovery
@@ -1167,4 +1167,4 @@ Chaque NIB-M doit avoir ses vecteurs de test correspondants dans le NIB-T. Le ma
 
 ---
 
-*cc-orchestrator-runtime — Implicit-Free Execution — "Reliability precedes intelligence."*
+*turnlock — Implicit-Free Execution — "Reliability precedes intelligence."*

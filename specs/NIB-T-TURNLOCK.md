@@ -1,18 +1,18 @@
 ---
-id: NIB-T-CCOR
+id: NIB-T-TURNLOCK
 type: nib-tddtests
 version: "2.0.0"
-scope: cc-orchestrator-runtime
+scope: turnlock
 status: approved
 consumers: [claude-code]
 superseded_by: []
 ---
 
-# NIB-T-CCOR — TDD Tests Brief
+# NIB-T-TURNLOCK — TDD Tests Brief
 
-**Package** : `cc-orchestrator-runtime`
+**Package** : `turnlock`
 **Statut** : v2.0 — séparation RED strict / GREEN Layer 1 companion (cf §0.4, NIB spec §2.3.1)
-**Source** : `docs/NX-CC-ORCHESTRATOR-RUNTIME.md` v0.8 (2026-04-19)
+**Source** : `docs/NX-TURNLOCK.md` v0.8 (2026-04-19)
 **Date** : 2026-04-20
 
 **Changelog v1.0 → v2.0** :
@@ -26,7 +26,7 @@ superseded_by: []
 
 ## 0. Préambule
 
-Ce document est la spécification de tests à implémenter **avant** toute ligne de code de production (étape RED du cycle TDD). Il matérialise le **contrat observable** de `cc-orchestrator-runtime` : ce que le runtime doit faire, vu de l'extérieur — par un orchestrateur consommateur et par l'agent parent qui parse stdout.
+Ce document est la spécification de tests à implémenter **avant** toute ligne de code de production (étape RED du cycle TDD). Il matérialise le **contrat observable** de `turnlock` : ce que le runtime doit faire, vu de l'extérieur — par un orchestrateur consommateur et par l'agent parent qui parse stdout.
 
 ### 0.1 Portée du NIB-T
 
@@ -47,7 +47,7 @@ Sont couverts dans ce NIB-T, dans l'ordre des fichiers de test :
 3. **Bindings** (Layer 3) — `SkillBinding.buildManifest` / `buildProtocolBlock`, `AgentBinding`, `AgentBatchBinding`.
 4. **Engine** (Layer 2) — `runOrchestrator` flow initial (§14.1), flow resume (§14.2), retry post-schema-error, retry post-timeout, single PhaseResult guard, deep-freeze, consumption exact-once.
 5. **Préflight errors** — config invalide, state manquant/corrompu, mismatch runId/orchestratorName → bloc ERROR preflight.
-6. **Protocole `@@CC_ORCH@@`** — 4 actions (`DELEGATE`, `DONE`, `ERROR`, `ABORTED`), format YAML-subset, mapping `PhaseResult.kind ↔ action`.
+6. **Protocole `@@TURNLOCK@@`** — 4 actions (`DELEGATE`, `DONE`, `ERROR`, `ABORTED`), format YAML-subset, mapping `PhaseResult.kind ↔ action`.
 7. **Taxonomie d'erreurs** — 11 classes (§6.6), champs publics de `RunLockedError`, classification transient/permanent.
 8. **Observabilité** — 11 types d'events (§11.3), corrélation par `runId`, absence de PII, `events.ndjson` owner-only append-only.
 9. **Modèle temporel** — séparation wall/monotonic/epoch-ms, `durationMs ≥ 0` sous clock jump, deadline cross-process via wall-clock epoch.
@@ -122,7 +122,7 @@ tests/
 │   │   ├── malformed-truncated.json
 │   │   ├── empty.json
 │   │   └── non-json-html.txt
-│   ├── protocol/                   # Blocs @@CC_ORCH@@ canoniques (chaînes brutes)
+│   ├── protocol/                   # Blocs @@TURNLOCK@@ canoniques (chaînes brutes)
 │   │   ├── delegate-skill.txt
 │   │   ├── delegate-agent.txt
 │   │   ├── delegate-batch.txt
@@ -149,7 +149,7 @@ tests/
 │   ├── mock-signal.ts              # AbortSignal + émission SIGINT/SIGTERM
 │   ├── fixture-loader.ts           # Chargement fixtures
 │   ├── state-builder.ts            # Fabriques de StateFile avec overrides
-│   ├── protocol-asserts.ts         # Assertions composites sur blocs @@CC_ORCH@@
+│   ├── protocol-asserts.ts         # Assertions composites sur blocs @@TURNLOCK@@
 │   ├── temp-run-dir.ts             # Crée un RUN_DIR temporaire + cleanup
 │   └── run-harness.ts              # Orchestre un scénario multi-invocations
 ├── services/                       # Layer 4
@@ -371,7 +371,7 @@ Signature : `writeProtocolBlock(action: "DELEGATE", fields: DelegateFields): str
 
 | ID | Input | Output attendu (string, lignes séparées par `\n`) |
 | --- | --- | --- |
-| T-PR-01 | `{ runId: "01HX...", orchestrator: "senior-review", manifest: "/abs/path.json", kind: "skill", resumeCmd: "bun run /path/main.ts --run-id 01HX... --resume" }` | `"\n@@CC_ORCH@@\nversion: 1\nrun_id: 01HX...\norchestrator: senior-review\naction: DELEGATE\nmanifest: /abs/path.json\nkind: skill\nresume_cmd: \"bun run /path/main.ts --run-id 01HX... --resume\"\n@@END@@\n\n"` (bloc précédé/suivi d'une ligne vide, `resume_cmd` quoté car contient espaces) |
+| T-PR-01 | `{ runId: "01HX...", orchestrator: "senior-review", manifest: "/abs/path.json", kind: "skill", resumeCmd: "bun run /path/main.ts --run-id 01HX... --resume" }` | `"\n@@TURNLOCK@@\nversion: 1\nrun_id: 01HX...\norchestrator: senior-review\naction: DELEGATE\nmanifest: /abs/path.json\nkind: skill\nresume_cmd: \"bun run /path/main.ts --run-id 01HX... --resume\"\n@@END@@\n\n"` (bloc précédé/suivi d'une ligne vide, `resume_cmd` quoté car contient espaces) |
 | T-PR-02 | idem avec `kind: "agent"` | identique sauf `kind: agent` |
 | T-PR-03 | idem avec `kind: "agent-batch"` | identique sauf `kind: agent-batch` |
 
@@ -419,7 +419,7 @@ Signature : `parseProtocolBlock(stdout: string): ProtocolBlock | null`.
 | --- | --- | --- |
 | T-PR-20 | Texte ne contenant pas de bloc | `null` |
 | T-PR-21 | Bloc sans `@@END@@` | `null` |
-| T-PR-22 | Bloc sans `@@CC_ORCH@@` de début | `null` |
+| T-PR-22 | Bloc sans `@@TURNLOCK@@` de début | `null` |
 | T-PR-23 | Bloc avec version incompatible (`version: 2`) | `null` (ou throw — **DÉCISION** : retour `null`, la gestion du mismatch incombe au parent agent) |
 | T-PR-24 | Bloc avec action inconnue | `null` |
 
@@ -428,13 +428,13 @@ Signature : `parseProtocolBlock(stdout: string): ProtocolBlock | null`.
 | ID | Input | Output |
 | --- | --- | --- |
 | T-PR-25 | Deux blocs valides dans la même string (ne devrait pas arriver, mais défensif) | **DÉCISION** : retourne le **premier** bloc parsé. La règle §7.4 ("un seul bloc par invocation") est garantie par le runtime émetteur, le parser parent-side est tolérant. |
-| T-PR-26 | Un bloc précédé de bruit (logs stderr mal redirigés, etc.) | Parsé correctement (le parser ignore les lignes avant `@@CC_ORCH@@`) |
+| T-PR-26 | Un bloc précédé de bruit (logs stderr mal redirigés, etc.) | Parsé correctement (le parser ignore les lignes avant `@@TURNLOCK@@`) |
 
 ### 4.8 Propriétés
 
 - **P-PR-a** : round-trip. Pour tout bloc `b` émis par `writeProtocolBlock`, `parseProtocolBlock(b)` reconstruit les mêmes champs sémantiques. Testé sur 4 actions × 5 variantes chacune.
 - **P-PR-b** : `writeProtocolBlock` et `parseProtocolBlock` sont des fonctions pures.
-- **P-PR-c** : tout bloc émis contient exactement une ligne `@@CC_ORCH@@` et une ligne `@@END@@`.
+- **P-PR-c** : tout bloc émis contient exactement une ligne `@@TURNLOCK@@` et une ligne `@@END@@`.
 - **P-PR-d** : tout bloc émis contient les champs obligatoires `version`, `run_id`, `orchestrator`, `action`. Vérifié par regex sur 20 émissions variées.
 
 ---
@@ -1486,7 +1486,7 @@ Ces tests sont transversaux — ils mobilisent plusieurs modules ou vérifient d
 
 | ID | Assertion |
 | --- | --- |
-| P-21 | Pour toute erreur (preflight ou runtime), un bloc `@@CC_ORCH@@ action: ERROR` est émis sur stdout. Jamais de silence. Testé sur les 11 classes d'erreur. |
+| P-21 | Pour toute erreur (preflight ou runtime), un bloc `@@TURNLOCK@@ action: ERROR` est émis sur stdout. Jamais de silence. Testé sur les 11 classes d'erreur. |
 | P-22 | La Promise `runOrchestrator()` ne rejette **jamais** à l'appelant. Tout throw interne est capté par le top-level handler et converti en bloc ERROR + exit (§4.4, C13). |
 
 ### 26.12 Observabilité : run complet
@@ -1544,7 +1544,7 @@ Les sections §27.7 à §27.14 restent RED strict : ce sont de vraies post-condi
 
 | ID | Assertion |
 | --- | --- |
-| C-GL-01 | Le module `cc-orchestrator-runtime` exporte : `runOrchestrator`, `definePhase`, `OrchestratorConfig`, `Phase`, `PhaseIO`, `PhaseResult`, `DelegationRequest`, `SkillDelegationRequest`, `AgentDelegationRequest`, `AgentBatchDelegationRequest`, `RetryPolicy`, `TimeoutPolicy`, `LoggingPolicy`, `OrchestratorLogger`, `OrchestratorEvent`, `OrchestratorError`, `OrchestratorErrorKind`, `InvalidConfigError`, `StateCorruptedError`, `StateMissingError`, `StateVersionMismatchError`, `DelegationTimeoutError`, `DelegationSchemaError`, `DelegationMissingResultError`, `PhaseError`, `ProtocolError`, `AbortedError`, `RunLockedError`, `PROTOCOL_VERSION`, `STATE_SCHEMA_VERSION`. |
+| C-GL-01 | Le module `turnlock` exporte : `runOrchestrator`, `definePhase`, `OrchestratorConfig`, `Phase`, `PhaseIO`, `PhaseResult`, `DelegationRequest`, `SkillDelegationRequest`, `AgentDelegationRequest`, `AgentBatchDelegationRequest`, `RetryPolicy`, `TimeoutPolicy`, `LoggingPolicy`, `OrchestratorLogger`, `OrchestratorEvent`, `OrchestratorError`, `OrchestratorErrorKind`, `InvalidConfigError`, `StateCorruptedError`, `StateMissingError`, `StateVersionMismatchError`, `DelegationTimeoutError`, `DelegationSchemaError`, `DelegationMissingResultError`, `PhaseError`, `ProtocolError`, `AbortedError`, `RunLockedError`, `PROTOCOL_VERSION`, `STATE_SCHEMA_VERSION`. |
 | C-GL-02 | Le module **n'exporte pas** : `executeCall`, engine internals, `SkillBinding`, `AgentBinding`, `AgentBatchBinding` (les 3 bindings restent internes), `clock` module, `state-io`, `validator`, `retry-resolver`, `error-classifier`, `logger`, `protocol`, `run-dir`, `run-id`, `abortableSleep` (tous internes). |
 | C-GL-03 | `ValidationPolicy` n'existe pas dans les exports (retrait M12). |
 | C-GL-04 | Toutes les sous-classes d'erreur sont `instanceof OrchestratorError` (TS + runtime check). |
@@ -1590,7 +1590,7 @@ Les sections §27.7 à §27.14 restent RED strict : ce sont de vraies post-condi
 
 | ID | Assertion |
 | --- | --- |
-| C-FC-01 | Pour toute erreur (preflight ou runtime), un bloc `@@CC_ORCH@@ action: ERROR` est émis sur stdout. Exit code ≠ 0. |
+| C-FC-01 | Pour toute erreur (preflight ou runtime), un bloc `@@TURNLOCK@@ action: ERROR` est émis sur stdout. Exit code ≠ 0. |
 | C-FC-02 | La Promise `runOrchestrator()` résout sans rejeter. Tout throw interne capturé (§4.4, C13). |
 | C-FC-03 | Preflight errors ont `run_id: null` si le runId n'a pas encore été adopté/généré. Sinon `run_id: <valeur>`. |
 | C-FC-04 | `orchestrator: <name>` toujours présent dans le bloc ERROR (disponible dès `config.name` qui est parsé en premier). |
@@ -2052,7 +2052,7 @@ Chaque invariant normatif du NX doit avoir au moins un test dans ce NIB-T. Table
 | effectiveRetryPolicy persistée | §7.1 M26, §14.1 step 16.n | T-RT-08, T-RO-42 à T-RO-44 |
 | Manifest per-attempt | §7.2 M6 | §19, T-RO-40 à T-RO-42 |
 | JSON malformé → DelegationSchemaError | §14.2 C6 | T-RS-14 à T-RS-18 |
-| Protocole `@@CC_ORCH@@` format | §7.4 | §4 (T-PR-*) |
+| Protocole `@@TURNLOCK@@` format | §7.4 | §4 (T-PR-*) |
 | events.ndjson owner-only append-only | §7.5 C14 | §24 (T-EV-*) |
 | Reconstruction flux via events | §7.5, §11.7 | T-EV-11 |
 | Retry table de décision | §8.2, §10.1 | §2 (T-RR-*) |
@@ -2102,4 +2102,4 @@ Par design, ces zones sont hors scope :
 
 ---
 
-*cc-orchestrator-runtime — Implicit-Free Execution — "Reliability precedes intelligence."*
+*turnlock — Implicit-Free Execution — "Reliability precedes intelligence."*

@@ -2,7 +2,7 @@
 id: NIB-M-INFRA-UTILS
 type: nib-module
 version: "1.0.0"
-scope: cc-orchestrator-runtime
+scope: turnlock
 module: infra-utils
 status: approved
 consumers: [claude-code]
@@ -11,7 +11,7 @@ superseded_by: []
 
 # NIB-M-INFRA-UTILS — Utilitaires techniques triviaux groupés
 
-**Package** : `cc-orchestrator-runtime`
+**Package** : `turnlock`
 **Modules couverts** : `clock`, `run-id`, `abortable-sleep`
 **Source NX** : §5.5 (transverse services), §12 (modèle temporel), §13.4 (abort propagé)
 **NIB-T associé** : §9 (T-CK-01 à T-CK-08 + P-CK-a/b), §8 (T-ID-01 à T-ID-04 + P-ID-a), §10 (T-AS-01 à T-AS-05 + P-AS-a/b)
@@ -311,4 +311,4 @@ const leaseUntilEpochMs = acquiredAtEpochMs + DEFAULT_IDLE_LEASE_MS;
 
 ---
 
-*cc-orchestrator-runtime — Implicit-Free Execution — "Reliability precedes intelligence."*
+*turnlock — Implicit-Free Execution — "Reliability precedes intelligence."*

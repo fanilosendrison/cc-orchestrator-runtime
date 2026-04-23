@@ -1,5 +1,5 @@
 
-@@CC_ORCH@@
+@@TURNLOCK@@
 version: 1
 run_id: null
 orchestrator: test-orch

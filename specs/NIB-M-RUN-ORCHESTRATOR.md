@@ -2,7 +2,7 @@
 id: NIB-M-RUN-ORCHESTRATOR
 type: nib-module
 version: "1.0.0"
-scope: cc-orchestrator-runtime
+scope: turnlock
 module: run-orchestrator
 status: approved
 consumers: [claude-code]
@@ -11,7 +11,7 @@ superseded_by: []
 
 # NIB-M-RUN-ORCHESTRATOR — Entry point `runOrchestrator` + préflight + mode dispatch
 
-**Package** : `cc-orchestrator-runtime`
+**Package** : `turnlock`
 **Source NX** : §4.4 (fail-closed + preflight errors), §14.1 steps 1-15 (initial), §14.2 steps 1-10 (resume préflight), §13.1-§13.2 (SIGINT/SIGTERM handler)
 **NIB-T associé** : §20 (T-PF-01 à T-PF-21 préflight), §15.1 (T-RO-01 happy path entry), §17.6 (T-RS-19 à T-RS-23 resume préflight state)
 **NIB-S référencé** : §6.1 (OrchestratorConfig validation), §6.9 (runOrchestrator signature), I-4 (fail-closed), I-7 (abort propagé), I-11 (lock per run), P-OWNER-ONLY-LOG
@@ -655,4 +655,4 @@ T-SG-01 à T-SG-11 — handler SIGINT/SIGTERM.
 
 ---
 
-*cc-orchestrator-runtime — Implicit-Free Execution — "Reliability precedes intelligence."*
+*turnlock — Implicit-Free Execution — "Reliability precedes intelligence."*

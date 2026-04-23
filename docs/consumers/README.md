@@ -4,7 +4,7 @@ Ce dossier contient la documentation des **consommateurs** du runtime, séparée
 
 ## Pourquoi cette séparation
 
-Le runtime (code dans `src/`, specs dans `specs/NIB-*`) est un **runtime d'exécution durable de machines à états** (FSM persistantes avec suspension par exit + reprise par relancement). Il est **générique** — il ne connaît ni Claude Code, ni skills, ni agents, ni quoi que ce soit de spécifique à un hôte particulier. Le protocole stdout qu'il émet (`@@CC_ORCH@@`, tag historique) est consommé par **un parent process**, quel qu'il soit.
+Le runtime (code dans `src/`, specs dans `specs/NIB-*`) est un **runtime d'exécution durable de machines à états** (FSM persistantes avec suspension par exit + reprise par relancement). Il est **générique** — il ne connaît ni Claude Code, ni skills, ni agents, ni quoi que ce soit de spécifique à un hôte particulier. Le protocole stdout qu'il émet (`@@TURNLOCK@@`) est consommé par **un parent process**, quel qu'il soit.
 
 Un **consommateur** est un produit qui s'appuie sur ce runtime pour offrir un service métier à son propre public. L'intégration Claude Code est **le premier** consommateur — et le seul aujourd'hui — mais il pourrait y en avoir d'autres (CI runners, REPLs, autres systèmes d'agents).
 

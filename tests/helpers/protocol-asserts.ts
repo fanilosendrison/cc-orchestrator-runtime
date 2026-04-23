@@ -8,7 +8,7 @@ import { parseProtocolBlock } from "../../src/services/protocol";
 import type { OrchestratorEvent } from "../../src/types/events";
 
 function countBlocks(stdout: string): number {
-	const matches = stdout.match(/@@CC_ORCH@@/g);
+	const matches = stdout.match(/@@TURNLOCK@@/g);
 	return matches === null ? 0 : matches.length;
 }
 

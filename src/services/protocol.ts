@@ -53,73 +53,58 @@ function serializeValue(value: string | number | boolean | null): string {
 	return value;
 }
 
-function writeDelegate(fields: DelegateFields): string {
+/** Shared structure: header (version, run_id, orchestrator, action) + body + footer. */
+function buildBlock(
+	action: ProtocolAction,
+	runId: string | null,
+	orchestrator: string,
+	bodyLines: readonly string[],
+): string {
 	return [
 		"",
-		"@@CC_ORCH@@",
+		"@@TURNLOCK@@",
 		`version: ${PROTOCOL_VERSION}`,
-		`run_id: ${serializeValue(fields.runId)}`,
-		`orchestrator: ${serializeValue(fields.orchestrator)}`,
-		"action: DELEGATE",
-		`manifest: ${serializeValue(fields.manifest)}`,
-		`kind: ${fields.kind}`,
-		`resume_cmd: ${serializeValue(fields.resumeCmd)}`,
+		`run_id: ${serializeValue(runId)}`,
+		`orchestrator: ${serializeValue(orchestrator)}`,
+		`action: ${action}`,
+		...bodyLines,
 		"@@END@@",
 		"",
 		"",
 	].join("\n");
 }
 
+function writeDelegate(fields: DelegateFields): string {
+	return buildBlock("DELEGATE", fields.runId, fields.orchestrator, [
+		`manifest: ${serializeValue(fields.manifest)}`,
+		`kind: ${fields.kind}`,
+		`resume_cmd: ${serializeValue(fields.resumeCmd)}`,
+	]);
+}
+
 function writeDone(fields: DoneFields): string {
-	return [
-		"",
-		"@@CC_ORCH@@",
-		`version: ${PROTOCOL_VERSION}`,
-		`run_id: ${serializeValue(fields.runId)}`,
-		`orchestrator: ${serializeValue(fields.orchestrator)}`,
-		"action: DONE",
+	return buildBlock("DONE", fields.runId, fields.orchestrator, [
 		`output: ${serializeValue(fields.output)}`,
 		`success: ${serializeValue(fields.success)}`,
 		`phases_executed: ${fields.phasesExecuted}`,
 		`duration_ms: ${fields.durationMs}`,
-		"@@END@@",
-		"",
-		"",
-	].join("\n");
+	]);
 }
 
 function writeError(fields: ErrorFields): string {
-	return [
-		"",
-		"@@CC_ORCH@@",
-		`version: ${PROTOCOL_VERSION}`,
-		`run_id: ${serializeValue(fields.runId)}`,
-		`orchestrator: ${serializeValue(fields.orchestrator)}`,
-		"action: ERROR",
+	return buildBlock("ERROR", fields.runId, fields.orchestrator, [
 		`error_kind: ${fields.errorKind}`,
 		`message: ${serializeValue(fields.message)}`,
 		`phase: ${serializeValue(fields.phase)}`,
 		`phases_executed: ${fields.phasesExecuted}`,
-		"@@END@@",
-		"",
-		"",
-	].join("\n");
+	]);
 }
 
 function writeAborted(fields: AbortedFields): string {
-	return [
-		"",
-		"@@CC_ORCH@@",
-		`version: ${PROTOCOL_VERSION}`,
-		`run_id: ${serializeValue(fields.runId)}`,
-		`orchestrator: ${serializeValue(fields.orchestrator)}`,
-		"action: ABORTED",
+	return buildBlock("ABORTED", fields.runId, fields.orchestrator, [
 		`signal: ${fields.signal}`,
 		`phase: ${serializeValue(fields.phase)}`,
-		"@@END@@",
-		"",
-		"",
-	].join("\n");
+	]);
 }
 
 export function writeProtocolBlock(
@@ -190,7 +175,7 @@ function parseKeyValueLine(
 
 export function parseProtocolBlock(stdout: string): ParsedProtocolBlock | null {
 	const lines = stdout.split(/\r?\n/);
-	const startIdx = lines.findIndex((l) => l.trim() === "@@CC_ORCH@@");
+	const startIdx = lines.findIndex((l) => l.trim() === "@@TURNLOCK@@");
 	if (startIdx === -1) return null;
 	const endIdx = lines.findIndex(
 		(l, i) => i > startIdx && l.trim() === "@@END@@",

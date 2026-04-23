@@ -2,7 +2,7 @@
 id: NIB-M-LOGGER
 type: nib-module
 version: "1.0.0"
-scope: cc-orchestrator-runtime
+scope: turnlock
 module: logger
 status: approved
 consumers: [claude-code]
@@ -11,7 +11,7 @@ superseded_by: []
 
 # NIB-M-LOGGER — Double-emitter stderr + `events.ndjson` owner-only
 
-**Package** : `cc-orchestrator-runtime`
+**Package** : `turnlock`
 **Source NX** : §5.5 (logger), §6.7 (OrchestratorEvent), §7.5 (events.ndjson), §11 (observabilité), C14 owner-only
 **NIB-T associé** : §23 (T-OB-01 à T-OB-13 taxonomie, P-OB-a/b/c), §24 (T-EV-01 à T-EV-14 events.ndjson, P-EV-a/b/c), §25 (T-OB-20 à T-OB-23 PII, P-OB-d)
 **NIB-S référencé** : §5 P-NO-PII + P-OWNER-ONLY-LOG, §6.7 (11 events), §6.8 (LoggingPolicy), I-6 (observabilité obligatoire), I-13 (PII)
@@ -366,4 +366,4 @@ runOrchestrator({
 
 ---
 
-*cc-orchestrator-runtime — Implicit-Free Execution — "Reliability precedes intelligence."*
+*turnlock — Implicit-Free Execution — "Reliability precedes intelligence."*

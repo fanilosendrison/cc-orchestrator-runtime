@@ -2,7 +2,7 @@
 id: NIB-M-ERRORS
 type: nib-module
 version: "1.0.0"
-scope: cc-orchestrator-runtime
+scope: turnlock
 module: errors
 status: approved
 consumers: [claude-code]
@@ -11,7 +11,7 @@ superseded_by: []
 
 # NIB-M-ERRORS — Taxonomie d'erreurs
 
-**Package** : `cc-orchestrator-runtime`
+**Package** : `turnlock`
 **Source NX** : §6.6 (liste canonique), §8 (classification, retry)
 **NIB-T associé** : §27.6 (C-ER-01 à C-ER-03), T-EC-01 à T-EC-14 (classify utilise ces classes), tests des flows (§15-§22) qui throw/enrichissent
 **NIB-S référencé** : §6.6, §8.1 (classification), I-4 (fail-closed), I-13 (PII : `message` ≤ 200 chars)
@@ -372,4 +372,4 @@ export function classify(err: unknown): "transient" | "permanent" | "abort" | "u
 
 ---
 
-*cc-orchestrator-runtime — Implicit-Free Execution — "Reliability precedes intelligence."*
+*turnlock — Implicit-Free Execution — "Reliability precedes intelligence."*

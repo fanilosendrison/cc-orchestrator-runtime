@@ -2,7 +2,7 @@
 id: NIB-M-LOCK
 type: nib-module
 version: "1.0.0"
-scope: cc-orchestrator-runtime
+scope: turnlock
 module: lock
 status: approved
 consumers: [claude-code]
@@ -11,7 +11,7 @@ superseded_by: []
 
 # NIB-M-LOCK — Lock file par run (acquire O_EXCL + refresh + release)
 
-**Package** : `cc-orchestrator-runtime`
+**Package** : `turnlock`
 **Source NX** : §4.11 (single process per run), §4.13 (lock d'exécution intégral v0.8), §7.5 (LockFile shape), §13.2 step 4
 **NIB-T associé** : §11 (T-LK-01 à T-LK-20, P-LK-a/b/c/d)
 **NIB-S référencé** : §7.5 (LockFile), I-11 (single process per run enforced), I-3 (atomicité)
@@ -465,4 +465,4 @@ const io: PhaseIO = {
 
 ---
 
-*cc-orchestrator-runtime — Implicit-Free Execution — "Reliability precedes intelligence."*
+*turnlock — Implicit-Free Execution — "Reliability precedes intelligence."*

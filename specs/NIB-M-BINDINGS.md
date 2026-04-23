@@ -2,7 +2,7 @@
 id: NIB-M-BINDINGS
 type: nib-module
 version: "1.0.0"
-scope: cc-orchestrator-runtime
+scope: turnlock
 module: bindings
 status: approved
 consumers: [claude-code]
@@ -11,7 +11,7 @@ superseded_by: []
 
 # NIB-M-BINDINGS — SkillBinding + AgentBinding + AgentBatchBinding
 
-**Package** : `cc-orchestrator-runtime`
+**Package** : `turnlock`
 **Source NX** : §5.4 (bindings interface), §6.5 (DelegationRequest variants), §7.2 (DelegationManifest), §7.4.1 (protocole DELEGATE)
 **NIB-T associé** : §12 (T-SK, P-SK), §13 (T-AG, P-AG), §14 (T-AB, P-AB)
 **NIB-S référencé** : §7.2 (manifest shape), §7.6 (DelegationBinding interface), I-15 (per-attempt paths)
@@ -23,7 +23,7 @@ superseded_by: []
 Trois bindings qui partagent une **interface commune** `DelegationBinding<Req>`. Chaque binding encapsule deux transformations write-side :
 
 1. `buildManifest(request, context): DelegationManifest` — construit le JSON manifest écrit à `$RUN_DIR/delegations/<label>-<attempt>.json`.
-2. `buildProtocolBlock(manifest, resumeCmd): string` — construit le bloc `@@CC_ORCH@@ action: DELEGATE` à écrire sur stdout.
+2. `buildProtocolBlock(manifest, resumeCmd): string` — construit le bloc `@@TURNLOCK@@ action: DELEGATE` à écrire sur stdout.
 
 **Principe normatif structurant (v0.6 C9)** : le binding **ne lit pas** les fichiers résultats. Lecture exclusivement côté engine (NIB-M-HANDLE-RESUME). Les bindings sont purs write-side.
 
@@ -486,4 +486,4 @@ Note : le `as any` disparaîtra avec un pattern match discriminé sur `kind` ; i
 
 ---
 
-*cc-orchestrator-runtime — Implicit-Free Execution — "Reliability precedes intelligence."*
+*turnlock — Implicit-Free Execution — "Reliability precedes intelligence."*
