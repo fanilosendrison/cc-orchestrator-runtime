@@ -11,7 +11,7 @@ superseded_by: []
 # NIB-S-TURNLOCK — System Brief
 
 **Package** : `turnlock`
-**Statut** : v1.0 — éclatement NIB actif, consommable par Claude Code
+**Statut** : v1.0 — éclatement NIB actif. Premier consommateur cible : Claude Code (voir `docs/consumers/claude-code/`).
 **Source NX** : `docs/NX-TURNLOCK.md` v0.8 (2026-04-19)
 **NIB-T associé** : `specs/NIB-T-TURNLOCK.md` v1.0
 
@@ -39,22 +39,61 @@ Il ne décrit **pas** les algorithmes internes des modules — ceux-là sont dé
 
 ### 1.1 Problème résolu
 
-L'écosystème `~/.claude/skills/` de Fanilo contient plusieurs skills dont l'exécution est **orchestrale** : enchaînement de sous-étapes combinant travail mécanique (énumération, filtrage, consolidation JSON) et travail sémantique (review hostile, dedup, classification). Deux archétypes coexistent : LLM-orchestré (variance stochastique, drift) et script-bash-orchestré (déterministe mais douloureux dès que le volume de manipulation JSON dépasse ce qu'un `jq` lit confortablement).
+turnlock est né d'un besoin concret : quand Claude Code génère du code qui ship en production, on a besoin de garanties plus fortes que "l'agent a dit que c'était fait". La boucle review-fix-verify qui *enforce* ces garanties doit être orchestrée **depuis l'extérieur de l'agent** — parce que l'agent ne peut pas fiablement policer son propre travail sur de longues itérations. La majorité de cette boucle (linters, vérifications structurelles, détection de spec-drift, énumération, filtrage, consolidation JSON) est mieux faite par du code déterministe que par un appel agent — coûteux, faillible, et sujet au drift. Seules quelques étapes sémantiques (review hostile, dedup, classification) valent réellement l'invocation d'un agent.
 
-Sans package mutualisé, chaque nouvel orchestrateur réimplémente ~500 lignes de plomberie (state durable, retry, timeout, émission protocole, validation schema, logs) avec des divergences subtiles qui produisent des bugs composés.
+Le besoin est donc **mixte** : orchestrer un pipeline qui mélange phases mécaniques (in-process) et phases agent-déléguées (invoquées via le host), avec choix phase-par-phase de l'exécutant approprié, et garanties strictes sur l'ensemble. Les quatre exigences ci-dessous ont émergé de ce problème, pas d'un exercice de design abstrait.
+
+Un orchestrateur de cette classe doit satisfaire **simultanément** quatre propriétés non-négociables :
+
+1. **Déterminisme** — la logique d'orchestration vit dans la FSM TypeScript, pas dans le jugement de l'agent. Les phases mécaniques s'exécutent in-process ; les phases agent-déléguées sont invoquées seulement là où c'est genuinely nécessaire. À état donné, la prochaine transition est toujours la même. Pas de drift, pas d'étapes sautées, pas de réordonnancement silencieux.
+2. **Fiabilité** — le state survit à tout ce qui peut tuer le process : fermeture de session, reboot OS, panne réseau, surcharge provider, rate limit, crash en cours de phase. Chaque transition stable est snapshottée atomiquement sur disque ; la reprise reprend exactement où ça s'est arrêté.
+3. **Auditabilité** — chaque run laisse une trace structurée sur disque : snapshots ordonnés, event log append-only, manifests JSON par délégation. On peut reconstituer après coup ce qui s'est passé, dans quel ordre, avec quels inputs/outputs.
+4. **Host-agnosticisme au niveau protocole** — l'orchestrateur ne se verrouille pas sur le SDK d'un host particulier. Le contrat avec le host doit être minimal et neutre (texte sur stdout + filesystem pour les résultats).
+
+À ces quatre propriétés s'ajoute une exigence fonctionnelle : pour les phases agent-déléguées, l'orchestrateur doit pouvoir **invoquer les primitives agentiques internes à la session du host** (skills Claude Code, sub-agents via `Task` tool, batches parallèles, ou leurs équivalents Codex/Cursor/opencode/Aider). Ces primitives ne sont pas accessibles depuis du code Node standard — elles sont propriété de la session du host.
+
+Les approches plus simples échouent chacune sur au moins une exigence :
+- **Script long-running qui tient la boucle** → meurt avec la session host (viole fiabilité).
+- **Boucle pilotée par l'agent lui-même** → drift, étapes sautées, jugement variable, et coût agent payé même pour les phases triviales (viole déterminisme + gaspille les appels agent).
+- **HTTP local entre script et host** → dépend de l'API spécifique du host (viole host-agnosticisme).
+- **Skill du host invoquant une skill** (composition pure host-side) → aucune persistance auditable structurée (viole auditabilité).
+- **Bash + jq** → satisfait fiabilité et host-agnosticisme partiel mais devient ingérable dès que le JSON dépasse 2 niveaux ; pas de typing, pas de validation schema ; difficile de mélanger proprement étapes mécaniques et appels agent.
+
+> **Premier consommateur** : l'écosystème `~/.claude/skills/` de Fanilo (Claude Code), où les skills `senior-review`, `loop-clean`, `dedup-codebase`, `backlog-crush` ont motivé l'extraction. Voir `docs/consumers/claude-code/` pour le mapping concret.
 
 ### 1.2 Réponse `turnlock`
 
-Un package infrastructure TypeScript qui fournit un moteur d'exécution normalisée pour orchestrateurs structurés en phases, piloté par un protocole in-band sur stdout (`@@TURNLOCK@@`) consommable par un agent Claude Code parent.
+Un runtime TypeScript qui satisfait les quatre exigences **simultanément**, par deux modes d'exécution complémentaires :
 
-Chaque run traverse un moteur déterministe où les décisions mécaniques (retry, timeout, classification d'erreurs) sont matérialisées en objets explicites — pas une séquence impérative qui cache ses branches.
+- **Phases mécaniques** : exécutées **in-process**. La phase retourne directement `nextState` (ou la délégation suivante). Aucun yield, aucun aller-retour avec le host, aucune écriture de bloc protocole sur stdout. Le snapshot `state.json` est tout de même écrit atomiquement avant la transition stable (fiabilité + auditabilité préservées).
+- **Phases agent-déléguées** : la phase retourne un `delegate(...)`. Le runtime écrit le manifest de délégation, snapshot l'état, **émet un bloc protocole sur stdout** (`@@TURNLOCK@@ ... @@END@@`), puis **termine son propre process** (exit 0). Le host lit le bloc, exécute la primitive demandée avec son contexte de session, écrit le résultat dans `runDir/results/`, puis relance le binaire avec `--resume --run-id <id>`. Le runtime recharge l'état depuis le snapshot, valide le résultat (zod), et continue.
+
+Le mécanisme suicide-and-resume **n'intervient que pour les phases agent-déléguées**. Une chaîne de phases purement mécaniques traverse le runtime sans aucun aller-retour avec le host — c'est ce qui rend rentable d'orchestrer du travail mécanique avec turnlock plutôt que de tout déléguer à l'agent.
+
+Mapping mécanisme → exigences :
+
+| Exigence | Comment turnlock la satisfait |
+|---|---|
+| Déterminisme | FSM TS typée. Phases pures qui retournent `nextState` ou une délégation. Décisions mécaniques (retry, timeout, classification d'erreurs) matérialisées en objets explicites. L'agent ne décide rien — ni la forme de la boucle, ni l'ordre des phases, ni quand s'arrêter. |
+| Fiabilité | `state.json` écrit atomiquement (`tmp + rename`) à chaque transition stable, **mécanique ou agent-déléguée**. État vit sur disque, jamais en mémoire entre phases agent. Lock O_EXCL + lease idle 30 min pour single-writer enforcement. |
+| Auditabilité | `state.json` à chaque transition + `events.ndjson` append-only + manifests JSON par délégation = trace complète reconstructible via `cat`/`jq`/`git diff`. |
+| Host-agnosticisme | Pour les phases agent-déléguées, contrat host = `(read stdout block, execute requested primitive, relaunch binary with --resume)`. Aucune dépendance à un SDK host. Tout host qui implémente ce contrat est valide. |
+
+Le protocole stdout est ce qui rend l'host-agnosticisme possible ; le suicide-and-resume + l'état sur disque est ce qui rend la fiabilité possible (même quand la session host meurt). Ensemble, ils libèrent le host d'avoir besoin de comprendre l'interne du runtime — et, attribut transverse fondamental, **rien de persistant ne tourne entre les phases : pas de serveur, pas de worker pool**. Le runtime peut donc tourner dans tout environnement capable d'exécuter un binaire (laptop, CI sans infra, session agent).
 
 ### 1.3 Positionnement dans l'écosystème
 
-- Package **infrastructure transversale** pour le tooling personnel Claude Code de Fanilo. Consommé par les orchestrateurs qui vivent dans `~/.claude/scripts/<name>/` et qui sont déclenchés par un skill dans `~/.claude/skills/<name>/`.
-- **Strictement Claude-Code-dépendant** : la primitive de délégation (émission de signal + exit + re-entry après invocation Skill/Agent par l'agent parent) n'a de sens qu'à l'intérieur d'une session Claude Code.
-- Distinct de `@vegacorp/llm-runtime` : runtime provider-agnostique pour appels LLM directs HTTP. Les deux runtimes peuvent coexister ; un orchestrateur `turnlock` peut, en théorie, utiliser `llm-runtime` pour un call LLM direct dans une phase — cas non ciblé v1 mais pas interdit.
-- Distinct de Temporal / Inngest / Trigger.dev : reprend les concepts (state durable, retry policies, materialized decisions) mais pas la forme (pas de serveur, pas de coordination distribuée, pas de déterminisme de workflow imposé).
+turnlock occupe une zone délimitée par ses quatre exigences d'origine. Il ne cherche à concurrencer aucun outil existant sur leur terrain — il occupe un créneau qu'aucun n'adresse précisément.
+
+- **vs. Temporal / Restate / Inngest / Trigger.dev** : ces outils satisfont fiabilité et auditabilité au prix d'un serveur à héberger, d'un cluster à opérer, et d'un modèle mental enterprise. Ils gagnent au scale distribué (millions de workflows, multi-datacenter, multi-langage). turnlock perd sur leur terrain et n'essaie pas. **Inversement**, turnlock tourne dans des environnements où Temporal et ses équivalents **ne peuvent pas exister du tout** : runners CI sans infra, workflows long-lived sur laptop, et surtout **dans les sessions agent (Claude Code, Codex, Cursor) où aucun workflow engine ne peut déployer un serveur**. Ce n'est pas un trade-off "moins puissant mais plus simple" — c'est un terrain disjoint.
+- **vs. SDK LLM directs** (`@vegacorp/llm-runtime`, Vercel AI SDK, etc.) : pour chaîner quelques appels LLM cross-providers depuis un script Node, ces SDK suffisent — un script linéaire fait l'affaire. turnlock devient pertinent quand on orchestre **plusieurs phases mixtes** (mécaniques + agent-déléguées) avec garanties fiabilité + auditabilité. Le coût du protocole stdout + suicide/resume n'est justifié qu'à partir de ce moment-là. Les deux runtimes peuvent coexister : un orchestrateur turnlock peut utiliser `llm-runtime` à l'intérieur d'une phase mécanique pour un call LLM direct (sans yield).
+- **vs. State machine libs in-process** (xstate, zod-state, etc.) : ces libs offrent du typing FSM dans un process long-running. Elles satisfont éventuellement l'auditabilité (avec discipline) mais pas la fiabilité (le state meurt avec le process) ni l'host-agnosticisme (pas de contrat avec un host externe). Si fiabilité et host-agnosticisme ne sont pas des exigences, elles sont plus simples et suffisent.
+- **vs. Agent frameworks** (LangGraph, CrewAI, AutoGen, etc.) : ces frameworks décident de l'orchestration via un agent (ou un graph d'agents). turnlock ne décide rien — il **contraint** quand et comment l'agent est invoqué, l'agent fait toujours le travail. Si la décision d'orchestration peut être déléguée à l'agent (acceptation du drift), un framework agent suffit.
+- **vs. Bash scripts + jq** : satisfont fiabilité (state sur disque, scripts relançables) et host-agnosticisme partiel, mais pas l'auditabilité structurée et deviennent ingérables dès que la manipulation JSON dépasse `jq` confortable. turnlock = la version typée, validée, structurée, qui scale au-delà du shell.
+
+**Le créneau** : orchestration déterministe ex ante, par un script TS typé, des primitives d'un host agent-capable en cours de session, avec garanties fiabilité + auditabilité + host-agnosticisme. Aucun outil existant n'occupe ce créneau précis.
+
+**Hosts cibles** : Claude Code (premier et seul consommateur complet à ce jour, voir `docs/consumers/claude-code/`). L'architecture accommode d'autres hosts agent-capables (Codex, Cursor, opencode, Aider, scripts custom) ; les intégrations correspondantes restent à écrire.
 
 ### 1.4 Divergence architecturale : snapshot-authoritative, pas event-sourced
 
@@ -90,7 +129,7 @@ Conséquence : pas de "guerre snapshot vs events rejoués". `state.json` gagne t
 
 | Zone | Statut v1 | Justification |
 | --- | --- | --- |
-| Exécution hors session Claude Code | Hors scope | Le runtime suppose un agent parent qui lit stdout et invoque `Skill`/`Agent` tools. Pas de mode headless. |
+| Exécution sans parent process | Hors scope | Le runtime suppose un parent qui lit stdout, exécute le travail demandé, et relance le binaire. Pas de mode headless self-driving. |
 | Call LLM direct | Hors scope | Consommer `llm-runtime` à l'intérieur d'une phase si besoin. |
 | Scheduling / cron | Hors scope | Le runtime est déclenché par une invocation externe. |
 | IPC distribué | Hors scope | Strictement process-local et session-local. |
@@ -339,7 +378,7 @@ export interface OrchestratorConfig<State extends object = object> {
    * Le runtime appelle resumeCommand(runId) à chaque délégation et place le résultat
    * dans le champ `resume_cmd` du bloc @@TURNLOCK@@ action: DELEGATE.
    * DOIT retourner une commande complète : interpréteur + main + --run-id <runId> --resume.
-   * Exemple : (runId) => `bun run ~/.claude/scripts/senior-review/main.ts --run-id ${runId} --resume`
+   * Exemple (consommateur Claude Code) : (runId) => `bun run ~/.claude/scripts/senior-review/main.ts --run-id ${runId} --resume`
    */
   readonly resumeCommand: (runId: string) => string;
 
@@ -517,7 +556,7 @@ export interface SkillDelegationRequest {
 
 export interface AgentDelegationRequest {
   readonly kind: "agent";
-  readonly agentType: string;          // ex: "senior-reviewer-file"
+  readonly agentType: string;          // ex: "senior-reviewer-file" (label opaque interprété par le parent)
   readonly prompt: string;
   readonly label: string;
   readonly retry?: RetryPolicy;
@@ -1006,7 +1045,7 @@ runOrchestrator(config) [mode initial, pas de --resume]
   1. Valider config → preflight ERROR si invalide (run_id: null)
   2. Parse argv (--resume absent, --run-id optionnel)
   3. Générer/adopter runId (ULID)
-  4. Résoudre RUN_DIR = <cwd>/.claude/run/cc-orch/<config.name>/<runId>/
+  4. Résoudre RUN_DIR (convention par défaut : `<cwd>/.claude/run/cc-orch/<config.name>/<runId>/` — héritée du premier consommateur Claude Code, voir L2-2 dans `docs/SEPARATION.md`)
   5. Créer RUN_DIR + sous-dossiers (delegations/, results/)
   6. Installer stderr logger uniquement (pas encore events.ndjson)
   7. Acquire lock (O_EXCL) :

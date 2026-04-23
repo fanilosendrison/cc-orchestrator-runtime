@@ -22,7 +22,9 @@ superseded_by: []
 
 Deux fonctions utilitaires pour la gestion des répertoires de run :
 
-- **`resolveRunDir`** — construit le chemin absolu du RUN_DIR selon la convention `<cwd>/.claude/run/cc-orch/<name>/<runId>/`. Pas d'I/O, fonction pure.
+- **`resolveRunDir`** — construit le chemin absolu du RUN_DIR selon la convention par défaut `<cwd>/.claude/run/cc-orch/<name>/<runId>/`. Pas d'I/O, fonction pure.
+
+> **Note (L2-2 — `docs/SEPARATION.md`)** : la convention `<cwd>/.claude/run/cc-orch/...` est héritée du premier consommateur Claude Code. Elle est en attente de généralisation (mécanisme de surcharge env var ou champ config). Tant que L2-2 n'est pas exécuté, c'est la seule convention supportée.
 - **`cleanupOldRuns`** — supprime les RUN_DIRs plus anciens que `retentionDays` jours, en préservant **impérativement** le `currentRunId`. Effet de bord filesystem.
 
 **Principe normatif structurant** : le RUN_DIR est scopé au triplet `(cwd, orchestratorName, runId)`. Deux runs sur des `cwd` différents (même `name`, même `runId` théoriquement) ne se marchent jamais dessus. C'est le `cwd` qui porte l'isolement filesystem naturel.
@@ -56,6 +58,7 @@ function resolveRunDir(cwd: string, orchestratorName: string, runId: string): st
 
 - **Fonction pure** — pas d'I/O, pas d'effet de bord. Deux appels avec mêmes arguments produisent la même string.
 - **Utilise `path.join`** (Node `node:path`) pour normaliser les séparateurs et gérer les cwd avec/sans slash final.
+- **Préfixe `.claude/run/cc-orch/`** : convention par défaut héritée du premier consommateur Claude Code. Le runtime **n'a pas** de surcharge configurable v1 — c'est l'item L2-2 (`docs/SEPARATION.md`) qui généralisera ce préfixe (env var ou champ config). Tant que L2-2 n'est pas exécuté, ce segment est en dur dans `path.join`.
 - **Cwd vide** → throw `InvalidConfigError("cwd cannot be empty")`. Défensif. Aucun appel légitime ne passe `""` — c'est un bug caller.
 - **Pas de validation de format** sur `orchestratorName` et `runId` — le caller (engine) a déjà validé en amont (§6.1 NIB-S pour `name`, ULID regex implicite pour `runId`).
 - **Pas de `path.resolve`** — on veut conserver `cwd` tel quel, pas le résoudre en chemin absolu. C'est au caller de passer un cwd absolu (typiquement `process.cwd()`).

@@ -1,7 +1,7 @@
 # Runtime / Consumer Separation — Work Log
 
 **Date d'ouverture** : 2026-04-22
-**Statut** : Level 1 terminé (éditorial), Level 2 partiellement exécuté (rename `turnlock` — 2026-04-23), reste en attente de validation
+**Statut** : Level 1 terminé (éditorial), Level 2 — L2-1 / L2-3 / L2-4 / L2-6 clos au 2026-04-23 (avec passe positionnement README + NIB-S §1 sur frame 4-exigences). Reste : L2-2 (RUN_DIR), L2-5 extraction repo B.
 
 ## Contexte
 
@@ -61,38 +61,63 @@ Changements qui touchent le **contrat du runtime** et/ou les **specs autoritativ
 
 **Condition d'exécution** : réflexion sur la convention par défaut et le mécanisme de surcharge (env var `ORCH_RUN_DIR` ? Champ `OrchestratorConfig.runDirRoot` ?).
 
-### L2-3 · Renommer le package npm + métadonnées associées — ✅ PARTIELLEMENT EXÉCUTÉ 2026-04-23
+### L2-3 · Renommer le package npm + métadonnées associées — ✅ CLOS 2026-04-23 (réservation seule)
 
 **Scope exécuté** :
 - [x] `package.json` field `name` : `cc-orchestrator-runtime` → `turnlock`
 - [x] `package.json` field `description` reformulée (neutre, sans mention Claude Code)
-- [x] Nom du repo GitHub : repositionné sur `github.com/turnlock` (handle réservé, remote origin mis à jour)
+- [x] Nom du repo GitHub : repositionné sur `github.com/fanilosendrison/turnlock` (remote origin mis à jour)
 - [x] Package npm `turnlock` (nom nu) réservé
 
-**Reste ouvert** :
-- [ ] `package.json` `license: "UNLICENSED"` + `private: true` — à trancher au moment de la première publication npm (MIT ? Apache-2 ?)
-- [ ] Description du repo GitHub à aligner via `gh repo edit` ou UI
+**Décision 2026-04-23** : on **n'aligne pas** la description du repo GitHub et on **garde** `license: "UNLICENSED"` + `private: true` tels quels. Objectif L2-3 = **réserver le nom** (npm + GH handle), rien de plus. Tant qu'aucune publication n'est planifiée, ces deux items sont volontairement laissés en l'état :
+
+- **Description GH vide** : volontaire — pas de signal public tant que le projet n'est pas publish-ready.
+- **`UNLICENSED` + `private: true`** : empêche un `npm publish` accidentel et reflète la réalité (pas de licence open-source décidée). À rouvrir le jour où une publication est planifiée — le choix MIT vs Apache-2 vs autre se fera à ce moment-là, pas maintenant.
 
 **Impact** :
-- Pré-publication npm : exécuté côté package.
-- Post-publication : N/A (premier publish sera sous `turnlock`).
+- Pré-publication npm : noms réservés, métadonnées internes au package cohérentes (`turnlock`, description neutre).
+- Post-publication : N/A — pas de publication prévue dans l'horizon court terme.
 
-### L2-4 · Mettre à jour les specs et docs de conception pour neutraliser "Claude Code" — ✅ PARTIELLEMENT EXÉCUTÉ 2026-04-23
+### L2-4 · Mettre à jour les specs et docs de conception pour neutraliser "Claude Code" — ✅ EXÉCUTÉ 2026-04-23
 
-**Scope exécuté (identifiants onomastiques cc-orchestrator-runtime / CCOR)** :
+**Scope exécuté — phase 1 (rename identifiants, 2026-04-23 matin)** :
 - [x] `NIB-S-CCOR.md` → `NIB-S-TURNLOCK.md`
 - [x] `NIB-T-CCOR.md` → `NIB-T-TURNLOCK.md`
 - [x] `docs/NX-CC-ORCHESTRATOR-RUNTIME.md` → `docs/NX-TURNLOCK.md` (fichier local gitignored, renommé pour cohérence)
 - [x] Mentions `cc-orchestrator-runtime` remplacées dans les 15 `NIB-M-*.md` et autres docs
 - [x] Cross-refs `NIB-S-CCOR §X` et `NIB-T-CCOR §X` mises à jour → `NIB-S-TURNLOCK §X` / `NIB-T-TURNLOCK §X`
 
-**Reste ouvert (dé-claudification éditoriale profonde)** :
-- [ ] Neutraliser les examples skills `senior-review`, `loop-clean`, `backlog-crush` dans les NIBs — garder avec note "exemple illustratif issu du consommateur Claude Code" ou renommer en `phase-foo` / `consumer-skill-x`
-- [ ] Passe éditoriale sur `NIB-M-PROTOCOL.md`, `NIB-M-BINDINGS.md`, `NIB-S-TURNLOCK.md`, `NIB-T-TURNLOCK.md` pour reformuler les passages qui présupposent Claude Code
-- [ ] `STACK_EVAL.yaml` : noter que `~/.claude/scripts` était le premier cas d'usage, pas un prérequis
-- [ ] `PROJECT_INDEX.md` et `SPEC_MANIFEST.md` — régénérer via `/repo-indexer` après le rename
+**Scope exécuté — phase 2 (dé-claudification éditoriale, 2026-04-23 PM)** :
+- [x] `NIB-S-TURNLOCK.md` §1.1, §1.2, §1.3 reformulés : runtime générique, premier consommateur Claude Code (au lieu de "strictement Claude-Code-dépendant"). §2.2 ligne "Hors scope" reformulée en "Exécution sans parent process".
+- [x] `NIB-T-TURNLOCK.md` §0.3, §29.3, §31 reformulés : "vrai parent process" remplace "vraie session Claude Code", note sur les consommateurs en usage quotidien.
+- [x] `NIB-M-PROTOCOL.md` §5 : note d'intro précisant que les exemples (`senior-review`, `/tmp/.claude/run/...`) viennent du premier consommateur Claude Code et sont des labels opaques pour le runtime.
+- [x] `NIB-M-RUN-DIR.md` §1 : note L2-2 sur la convention `<cwd>/.claude/run/cc-orch/...` héritée du premier consommateur.
+- [x] Exemples illustratifs gardés avec note de provenance (pas renommés en `phase-foo` — reste plus parlant et n'engage pas l'archi du runtime).
+- [x] `STACK_EVAL.yaml` (`spec_constraints`, `runtime`, `linter`) annotés : `~/.claude/scripts` = premier cas d'usage Claude Code, pas prérequis.
+- [x] `PROJECT_INDEX.md` régénéré (Git ref 5639ab0, runtime-positioning + structure réelle src/engine/services/bindings).
+- [x] `SPEC_MANIFEST.md` régénéré via `bun ~/.claude/scripts/index-repo/src/cli.ts --force`.
+- [x] `bun test` 490/490 passe — aucune régression introduite par la passe éditoriale.
 
-**Impact** : le rename d'identifiants est mécanique et fait. La dé-claudification profonde reste un chantier éditorial dédié (~1j).
+**Frontmatter `consumers: [claude-code]`** : volontairement gardé tel quel dans tous les NIBs. C'est une déclaration sémantiquement correcte (Claude Code est un consommateur connu) qui pourra être étendue à mesure que d'autres consommateurs émergent. Pas une contradiction avec la position "runtime générique".
+
+**Scope exécuté — phase 3 (résidus + relocalisation, 2026-04-23 PM)** :
+- [x] `docs/EXECUTION-FLOW-WALKTHROUGH.md` déplacé vers `docs/consumers/claude-code/EXECUTION-FLOW-WALKTHROUGH.md` (cohérent avec L1 — c'est un doc consommateur). `.gitignore` mis à jour.
+- [x] Walkthrough : refresh `@@CC_ORCH@@` → `@@TURNLOCK@@` (toutes occurrences), `cc-orchestrator-runtime` → `turnlock`, `NX-CC-ORCHESTRATOR-RUNTIME.md` → `NX-TURNLOCK.md`, `prefix CC_ORCH` → `prefix TURNLOCK`.
+- [x] `NIB-T-TURNLOCK.md` : résidus `/tmp/ccor-test-*` → `/tmp/turnlock-test-*` (§1.4, §28.1).
+- [x] `tests/helpers/temp-run-dir.ts` (default arg) et `tests/helpers/mock-fs.ts` (2 occurrences) : préfixe temp dir `ccor-test-` → `turnlock-test-` pour aligner code et NIB-T (résolution divergence spec↔code détectée passe 3).
+- [x] `NIB-T-TURNLOCK.md` §7.1 (T-RD) et §12.1 (T-SK) : notes d'intro précisant que les noms et chemins des fixtures viennent du premier consommateur Claude Code.
+- [x] `NIB-M-RUN-DIR.md` §2.3 : note explicite que le préfixe `.claude/run/cc-orch/` est en dur tant que L2-2 n'est pas exécuté (renvoi vers `docs/SEPARATION.md` L2-2).
+- [x] `docs/consumers/claude-code/UX-VISION-AND-GAPS.md` : titre passé à "Turnlock x Claude Code", toutes mentions `CCOR` / `cc-orchestrator-runtime` / `@@CC_ORCH@@` / `NX-CC-ORCHESTRATOR-RUNTIME` / `NIB-S-CCOR` / `NIB-T-CCOR` / phrases de déclencheurs ("en ccor", etc.) refresh vers `turnlock` / `@@TURNLOCK@@` / `NX-TURNLOCK` / `NIB-S-TURNLOCK` / `NIB-T-TURNLOCK` / "en turnlock".
+- [x] `bun test` 490/490 toujours passe.
+
+**Hors scope L2-4** (déférés) :
+- Enrichissement des `validates: []` des NIBs vers des globs explicites pointant vers `src/`/`tests/` — chantier transverse via repo-indexer step 1.5, à faire avant L2-5.
+- Renommage des `kind: "skill" | "agent" | "agent-batch"` → c'est L2-6 (vocabulaire bindings).
+- Généralisation effective du chemin `RUN_DIR` → c'est L2-2.
+
+**Vérification résidus finale** : `grep -rn -iE "@@CC_ORCH@@|cc-orchestrator-runtime|CC_ORCH\\b|CCOR\\b|ccor-test|NX-CC-ORCHESTRATOR" specs/ docs/` retourne **uniquement** `docs/SEPARATION.md` (work log historique — mentions légitimes décrivant les renames eux-mêmes). Tout le reste est neutralisé.
+
+**Impact** : la dé-claudification éditoriale est complète. Les passages qui présupposaient strictement Claude Code (vision, scope, statut, intro tests) sont reformulés en termes de "parent process arbitraire". Les exemples conservent leurs noms parlants (`senior-review`, etc.) avec note de provenance — ils n'engagent pas l'archi. Le doc `EXECUTION-FLOW-WALKTHROUGH` (intrinsèquement Claude Code) est désormais sous `docs/consumers/claude-code/`.
 
 ### L2-5 · Extraction du produit B dans un repo séparé
 
@@ -115,27 +140,32 @@ Changements qui touchent le **contrat du runtime** et/ou les **specs autoritativ
 - Décision sur la stratégie de publication npm pour B (publier ? garder privé ? publier seulement le runtime A ?)
 - Décision sur la licence de B (peut différer de A)
 
-### L2-6 · Décision sur le vocabulaire des bindings (`skill` / `agent` / `agent-batch`)
+### L2-6 · Vocabulaire des bindings (`skill` / `agent` / `agent-batch`) — ✅ CLOS 2026-04-23 par décision Option A
 
-**Constat** : l'API publique du runtime utilise un vocabulaire **onomastiquement Claude** pour classifier les délégations :
+**Décision** : garder `kind: "skill" | "agent" | "agent-batch"` tel quel, sans renommage. Pas de breaking change. La passe éditoriale ré-encadre ce vocabulaire dans le cadrage correct (positionnement turnlock, voir ci-dessous).
 
-- **Types** : `SkillDelegationRequest`, `AgentDelegationRequest`, `AgentBatchDelegationRequest` (`src/types/delegation.ts`)
-- **Tags** : `kind: "skill" | "agent" | "agent-batch"` (7+ endroits : `types/delegation`, `types/events`, `bindings/types`, `state-io`, `protocol`, `engine/context`, `engine/shared`)
-- **Bindings** : `skillBinding`, `agentBinding`, `agentBatchBinding` (`src/bindings/`)
-- **Méthodes de `PhaseIO`** : `delegateSkill`, `delegateAgent`, `delegateAgentBatch` (`src/types/phase.ts`)
+**Justification (acquise par délibération 2026-04-23 sur le frame public correct)** :
 
-Ce vocabulaire est **plus qu'un nommage cosmétique** — il encode dans la sémantique publique l'hypothèse que le consommateur parle en "skills" et "agents", ce qui est **vrai pour Claude Code**, **faux pour un autre consommateur** (un runner CI n'a pas de "skills", un REPL n'a pas d'"agents").
+L'analyse initiale (Option A vs B) reposait sur le présupposé "le vocabulaire est onomastiquement Claude → c'est une dette". Cette analyse était **fausse**.
 
-**Décision à trancher** :
+Le frame public correct de turnlock (formalisé dans README.md et NIB-S §1.1-§1.3 le 2026-04-23) est : **"a deterministic, reliable, auditable, host-agnostic runtime for orchestrating agent-host primitives from a TypeScript script"**. turnlock n'est **pas** un runtime FSM durable générique — c'est un **protocole de passerelle** entre un script TS déterministe et les **primitives agentiques internes à la session d'un host** (Claude Code, Codex, Aider, …) que le script ne peut pas invoquer directement.
 
-| Option | ✅ Avantage | ❌ Inconvénient |
-|---|---|---|
-| **A : Garder le vocabulaire** avec note "convention portable" | Aucun breaking change API/protocole/specs. Un parent non-Claude peut simplement mapper `skill → commande shell`, `agent → worker`, `agent-batch → pool`. | Onomastique Claude dans la surface publique — perception "c'est pour Claude". |
-| **B : Neutraliser** en `kind: "sync" \| "async" \| "parallel"` (ou `"task" \| "subtask" \| "batch"`) | API et specs vraiment neutres. Cohérent avec la position "runtime générique". | Breaking change majeur : protocole, types publics, méthodes de `PhaseIO`, bindings, tests, NIBs. ~1-2j de travail. |
+Dans ce frame, `skill / agent / agent-batch` n'encodent **pas** une hypothèse Claude-specific. Ce sont les **trois catégories canoniques de primitives agent-host** que le runtime sait demander :
 
-**Recommandation softe** : Option A avec documentation explicite ("`skill` est un label générique — toute tâche synchrone à résultat unique" etc.). Option B deviendra intéressante si/quand un second consommateur émerge et qu'on découvre qu'un mapping 1-1 vers son vocabulaire est tordu.
+- `skill` = capacité nommée invokable du host avec args structurés (Claude Code SKILL.md, Codex command, etc.)
+- `agent` = délégation freeform à un sub-agent du host (Claude Code Task tool, Codex sub-agent, etc.)
+- `agent-batch` = N délégations parallèles à des sub-agents
 
-**Condition d'exécution** : décision explicite à prendre avant L2-5 (l'extraction). Si l'option B est retenue, la faire **avant** ou **pendant** L2-4 pour éviter deux chantiers éditoriaux.
+Renommer (`skill → tool`, `kind: sync/async/parallel`, ou réduction à cardinalité pure `single/batch`) **dénaturerait** le propos : turnlock ne traite ni avec des "tools" génériques (au sens OpenAI/MCP — qui sont des appels que le script peut faire lui-même via SDK), ni avec de la cardinalité abstraite. Il traite **spécifiquement** avec ces trois shapes de primitives, et chaque host fournit son propre mapping concret (table dans `docs/consumers/README.md`).
+
+**Le présupposé rejeté** : "un consommateur non-Claude n'aurait pas de skills/agents". Faux — tout host agent-capable (Codex, Aider, agent shell custom) expose les mêmes 3 catégories de primitives, sous des noms différents. Le runtime parle de **catégories**, le mapping vers les noms locaux du host vit chez le consommateur.
+
+**Cas où le vocabulaire deviendrait inadéquat** : si un consommateur émerge dont les primitives ne tombent dans **aucune** de ces 3 catégories (ex. un host purement async avec des callbacks, ou un host à granularité fine type "1 message LLM = 1 délégation"). Dans ce cas, ce serait probablement le signe que ce consommateur n'est pas dans le scope cible de turnlock (cf. README "What turnlock is not"). On rouvrirait alors la décision.
+
+**Action éditoriale faite en parallèle (passe positionnement 2026-04-23)** :
+- [x] README.md réécrit : préambule passe de "durable FSM runtime" à "deterministic, reliable, auditable, host-agnostic runtime for orchestrating agent-host primitives". 4 exigences non-négociables explicitées (déterminisme + fiabilité + auditabilité + host-agnosticisme). Section "What turnlock is not" élargie (4 contre-positionnements : Temporal, AI SDK, in-process FSM, agent framework).
+- [x] NIB-S §1.1 / §1.2 / §1.3 reformulés sur le même frame 4-exigences. §1.1 explicite l'origine concrète (boucles review-fix-verify dans Claude Code) et liste les approches plus simples qui violent au moins une exigence. §1.2 montre le mapping mécanisme→exigences. §1.3 contraste turnlock avec Temporal, SDK LLM, FSM libs, agent frameworks, bash+jq.
+- [x] `docs/consumers/README.md` augmenté d'une table mapping `kind` → primitive host (Claude Code remplie, Codex / Aider en TBD).
 
 ---
 
@@ -145,6 +175,12 @@ Level 1 est **sans risque** : pas de changement de protocole, pas de rupture de 
 
 Level 2 bouge des contrats (protocole, chemins, noms de package). Chaque item mérite une délibération ciblée, car les décisions sont **difficiles à revenir** une fois publiées externement.
 
-## Référence — message de synthèse original
+## Référence — synthèse du repositionnement
 
-Ce chantier a été ouvert suite à une conversation où il est devenu clair que le nom "cc-orchestrator-runtime" et le cadrage "lib d'infrastructure pour Claude Code" sous-décrivaient la nature réelle de l'artefact : **un runtime générique de FSM durable, dont Claude Code est le premier consommateur parmi d'autres possibles**. Rename exécuté le 2026-04-23 : le runtime s'appelle désormais **turnlock** — les trois lectures (tour agentique, transition atomique, O_EXCL lock single-writer) convergent toutes sur ce que fait le produit.
+Ce chantier a été ouvert (2026-04-22) suite à une conversation où il est devenu clair que le nom "cc-orchestrator-runtime" et le cadrage "lib d'infrastructure pour Claude Code" sous-décrivaient la nature réelle de l'artefact. Une première formulation intermédiaire ("runtime générique de FSM durable, dont Claude Code est le premier consommateur") a guidé les passes L2-1 à L2-4 (rename + dé-claudification éditoriale).
+
+**Frame public final (acquis 2026-04-23)** : turnlock = **a deterministic, reliable, auditable, host-agnostic runtime for orchestrating agent-host primitives from a TypeScript script**. La durabilité n'est ni accidentelle ni générique — c'est une **conséquence obligée** de quatre exigences non-négociables conjointes (déterminisme + fiabilité + auditabilité + host-agnosticisme) qu'aucun outil existant ne satisfait simultanément sur le créneau "single-machine, single-user, zero-infra, host-bound". L'origine concrète : discipliner les boucles review-fix-verify dans des sessions Claude Code sans que l'agent réordonne, saute, ou improvise.
+
+**Rename** exécuté le 2026-04-23 : le runtime s'appelle désormais **turnlock** — les trois lectures (tour agentique, transition atomique, O_EXCL lock single-writer) convergent toutes sur ce que fait le produit.
+
+**Vocabulaire `skill / agent / agent-batch`** : conservé (L2-6 clos par décision Option A). Ce sont les trois catégories canoniques de primitives agent-host, pas une dette Claude-specific.

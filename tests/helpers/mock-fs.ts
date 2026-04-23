@@ -28,7 +28,7 @@ export interface MockFs {
  * semantics. Cleanup happens via reset().
  */
 export function createMockFs(): MockFs {
-	let root = mkdtempSync(join(tmpdir(), "ccor-test-"));
+	let root = mkdtempSync(join(tmpdir(), "turnlock-test-"));
 	const errorInjections = new Map<string, Error>();
 
 	const ensureDir = (filePath: string): void => {
@@ -74,7 +74,7 @@ export function createMockFs(): MockFs {
 		reset(): void {
 			rmSync(root, { recursive: true, force: true });
 			errorInjections.clear();
-			root = mkdtempSync(join(tmpdir(), "ccor-test-"));
+			root = mkdtempSync(join(tmpdir(), "turnlock-test-"));
 		},
 	};
 

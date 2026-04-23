@@ -62,7 +62,7 @@ Ce NIB-T **ne contient pas** :
 - De détails d'implémentation de production (forme interne du dispatcher, algorithme de parsing du protocole, structure de fichiers `src/`).
 - De tests sur du comportement interne non observable (ex. "la fonction `X` appelle `Y` avant `Z`").
 - De tests unitaires sur fonctions internes non exportées — ceux-là émergent pendant GREEN.
-- De tests live (vraie session Claude Code) — tous les tests sont mockés par `mock-fs`, `mock-clock`, `mock-stdio`, `mock-logger`.
+- De tests live (vrai parent process invoquant le binaire et exécutant les blocs protocole) — tous les tests sont mockés par `mock-fs`, `mock-clock`, `mock-stdio`, `mock-logger`.
 
 ### 0.4 Classification RED strict vs GREEN Layer 1 companion
 
@@ -243,7 +243,7 @@ tests/
 - **Pas de fixture vide** : chaque fichier JSON contient un payload réaliste, reproduction littérale de ce qu'un sub-agent ou un skill produirait.
 - **Fixtures sous contrôle de version** : sourcées de specs littérales (§7.1, §7.2, §7.4) ou d'exécutions capturées.
 - **Normalisation** : les fichiers JSON n'ont pas d'espaces de fin, fin de ligne LF. Les chemins dans les fixtures sont relatifs et résolus par les helpers à l'exécution.
-- **Indépendance au filesystem réel** : aucun test n'écrit hors d'un temp dir ou memfs créé par `temp-run-dir.ts`. Garantie : `rm -rf /tmp/ccor-test-*` après `afterAll` doit tout nettoyer.
+- **Indépendance au filesystem réel** : aucun test n'écrit hors d'un temp dir ou memfs créé par `temp-run-dir.ts`. Garantie : `rm -rf /tmp/turnlock-test-*` après `afterAll` doit tout nettoyer.
 - **Indépendance au wall clock réel** : tout timing passe par `mock-clock.ts`. Un test qui attend un vrai délai est un bug — utiliser `advanceMono` / `advanceEpoch`.
 
 ### 1.5 Principe de découverte du bug via fixture
@@ -536,6 +536,8 @@ Référence : §5.5.
 
 ### 7.1 Acceptance tests — resolveRunDir
 
+> **Note** : les noms d'orchestrateur (`senior-review`) et le segment `.claude/run/cc-orch/` proviennent du premier consommateur (Claude Code, voir `docs/consumers/claude-code/`). Pour le runtime, ce sont des labels et un préfixe de chemin opaques. Voir L2-2 dans `docs/SEPARATION.md` pour la généralisation prévue de ce préfixe.
+
 | ID | Input | Output |
 | --- | --- | --- |
 | T-RD-01 | `cwd="/repo"`, `name="senior-review"`, `runId="01HX"` | `"/repo/.claude/run/cc-orch/senior-review/01HX"` |
@@ -700,6 +702,8 @@ Référence : §5.4, §6.5, §7.2, §7.4.1.
 Signature : `SkillBinding.buildManifest(request, context): DelegationManifest` + `SkillBinding.buildProtocolBlock(manifest): string`.
 
 ### 12.1 Acceptance tests — buildManifest
+
+> **Note** : les noms (`senior-review`, `dedup-codebase`, etc.) et chemins (`/tmp/.claude/run/cc-orch/...`) utilisés dans les fixtures de §12 et suivants proviennent du premier consommateur Claude Code. Pour le runtime, ce sont des labels et chemins opaques. Voir `docs/consumers/claude-code/` pour le contexte de provenance.
 
 Context fixture : `{ runId: "01HX", orchestratorName: "senior-review", phase: "dispatch", resumeAt: "consolidate", attempt: 0, maxAttempts: 3, emittedAt: "2026-04-19T12:00:00.000Z", emittedAtEpochMs: 1745062800000, timeoutMs: 600000, deadlineAtEpochMs: 1745063400000, runDir: "/tmp/.claude/run/cc-orch/senior-review/01HX" }`.
 
@@ -1724,7 +1728,7 @@ Ce qui suit décrit les helpers à implémenter dans `tests/helpers/`. Ces helpe
 ```ts
 // Filesystem mockable : memfs ou temp dir avec cleanup.
 export interface MockFs {
-  readonly root: string;                   // Ex: /tmp/ccor-test-abc123
+  readonly root: string;                   // Ex: /tmp/turnlock-test-abc123
   writeFile(path: string, content: string): void;
   readFile(path: string): string;
   exists(path: string): boolean;
@@ -1931,9 +1935,9 @@ Règle appliquée : "une fixture rate, on questionne la fixture avant de questio
 
 Cibles alignées sur §19.2 du NX. Les décisions matérialisées (retry, deadline, per-attempt paths) doivent être à 100% par testabilité exhaustive des fonctions pures.
 
-### 29.3 Pas de test à la vraie session Claude Code
+### 29.3 Pas de test à un vrai parent process
 
-Aucun test ne nécessite une session Claude Code live. Tous les tests reposent sur `mock-fs` + `mock-clock` + `mock-stdio` + `mock-logger`. Critère de succès : `bun test` passe **offline** et sans aucun tool Claude Code attaché.
+Aucun test ne nécessite un parent process live (Claude Code, runner CI, daemon, ou autre) qui invoquerait réellement le binaire et interpréterait les blocs protocole. Tous les tests reposent sur `mock-fs` + `mock-clock` + `mock-stdio` + `mock-logger`. Critère de succès : `bun test` passe **offline** et sans aucun parent process attaché.
 
 ### 29.4 Granularité des fichiers de test
 
@@ -2088,13 +2092,13 @@ Chaque invariant normatif du NX doit avoir au moins un test dans ce NIB-T. Table
 
 Par design, ces zones sont hors scope :
 
-- **Tests live de session Claude Code** : nécessitent un vrai agent parent qui invoque Skill/Agent tools. Testés par `senior-review` v2 en usage quotidien (phase 3 du plan §18.1).
+- **Tests live avec un vrai parent process** : nécessitent un parent qui exécute réellement le travail demandé par les blocs protocole et relance le binaire (Claude Code, runner CI, daemon, etc.). Couverts par les consommateurs en usage quotidien — voir `docs/consumers/claude-code/` pour le premier consommateur (skills `senior-review`, `loop-clean`, etc.).
 - **Tests de performance** : latence, débit, memoize. Peuvent être ajoutés en bench séparé, pas en NIB-T.
 - **Tests de chaos** : injection aléatoire de failures filesystem concurrentes. Hors scope v1.
 - **Tests de fuite mémoire long-running** : heures de re-entries consécutives. Mesure séparée.
 - **Tests d'implémentation interne** : forme du dispatcher, layout des services, algorithme de parsing protocole — émergent en GREEN.
 - **Tests d'intégration avec `llm-runtime`** : scenarios où une phase fait un call LLM direct. Hors scope v1 (§3.2, §16.4).
-- **Tests de la migration `senior-review` v1 → v2** : c'est le livrable de la phase 2 (§18.1), pas du runtime.
+- **Tests de migration de consommateur** (ex. `senior-review` v1 → v2) : c'est un livrable de l'intégration consommateur, pas du runtime.
 - **Tests de scheduler / cron** : le runtime ne planifie rien (§3.2). Testé séparément côté skill `schedule`.
 - **Tests de reprise après SIGKILL** : limitation v1 explicite (§3.2, §13.1, §17).
 - **Tests de circuit breaker / multi-run** : hors scope v1 (§3.2, §17).

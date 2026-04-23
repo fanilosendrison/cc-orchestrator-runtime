@@ -343,6 +343,8 @@ Testé sur 4 actions × 5 variantes chacune (T-PR-01 à T-PR-12 pour le writer, 
 
 ## 5. Examples
 
+> **Note** : les noms d'orchestrateur (`senior-review`) et chemins (`/tmp/.claude/run/cc-orch/...`) utilisés dans les exemples ci-dessous proviennent du premier consommateur (Claude Code, voir `docs/consumers/claude-code/`). Ce sont des labels et chemins opaques pour le runtime — toute autre convention est valide tant que le format protocole est respecté.
+
 ### 5.1 Writer DELEGATE
 
 ```ts
