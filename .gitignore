@@ -86,6 +86,7 @@ CLAUDE.md
 docs/NX-TURNLOCK.md
 docs/consumers/claude-code/EXECUTION-FLOW-WALKTHROUGH.md
 docs/consumers/claude-code/UX-VISION-AND-GAPS.md
+docs/formalizing-fsm-builder/
 
 # ---------- turnlock run artifacts (default root + legacy Claude Code override) ----------
 .turnlock/
