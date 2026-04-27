@@ -1,6 +1,6 @@
 {
   "name": "turnlock",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "Durable finite-state-machine runtime for TypeScript. Snapshot-authoritative state, in-band stdout protocol, POSIX-grade I/O discipline. Host-agnostic: suspends by terminating its process and resumes from disk.",
   "type": "module",
   "main": "./dist/index.js",
@@ -24,7 +24,7 @@
     "changelog": "git-cliff --output CHANGELOG.md"
   },
   "dependencies": {
-    "zod": "^3.22.0",
+    "zod": "^4.3.6",
     "ulid": "^2.3.0"
   },
   "devDependencies": {
